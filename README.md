@@ -4,13 +4,6 @@
 
 ## Setup
 
-### Comentarios generales
-Vamos a tener 2 bases de datos en un container de Docker. La primera la vamos a usar exclusivamente para el desarrollo (_dev_). Por el otro lado, la segunda la vamos a usar solo para ejecutar tests (_test_). Esto evita interferencia entre las bases de datos.
-
-### Docker
-
-Seguir [este tutorial](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04) para instalarlo en Ubuntu. Tambien pueden bajarse Docker Desktop usando [este link](https://www.docker.com/).
-
 ### .env
 
 1. Crear un nuevo archivo en la carpeta backend que se llame _.env_ y otro que se llame _.env.test_
