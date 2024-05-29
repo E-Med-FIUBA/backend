@@ -1,0 +1,57 @@
+{
+  "name": "@fiu-fit/api-gateway",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "purge": "rimraf node_modules",
+    "prebuild": "rimraf dist",
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "test": "dotenv -e .env.test -- jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "pretest:e2e": "yarn db:test:restart",
+    "postinstall": "yarn husky install",
+    "test:e2e": "dotenv -e .env.test -- jest --no-cache --config ./test/jest-e2e.json",
+    "lint:prettier": "prettier --config .prettierrc.json --ignore-path .prettierignore --write",
+    "lint:eslint": "eslint --fix -c .eslintrc.json --ignore-path .eslintignore",
+    "lint": "yarn run lint:prettier && yarn run lint:eslint",
+    "prepare": "husky"
+  },
+  "prisma": {
+    "seed": "ts-node ./prisma/seeder.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx}": [
+      "npx prettier --write",
+      "npx eslint --fix"
+    ]
+  }
+}

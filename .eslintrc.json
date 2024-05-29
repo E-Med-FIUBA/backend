@@ -1,0 +1,269 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:import/typescript",
+    "prettier"
+  ],
+  "plugins": [
+    "prettier",
+    "@typescript-eslint",
+    "import",
+    "unused-imports"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "rules": {
+    /* plugin:@typescript-eslint */
+    "@typescript-eslint/array-type": [
+      "error",
+      {
+        "default": "array-simple"
+      }
+    ],
+    "@typescript-eslint/adjacent-overload-signatures": [
+      "error"
+    ],
+    "@typescript-eslint/ban-types": [
+      "error"
+    ],
+    "brace-style": "off",
+    "@typescript-eslint/brace-style": [
+      "error"
+    ],
+    "func-call-spacing": "off",
+    "@typescript-eslint/func-call-spacing": [
+      "error",
+      "never"
+    ],
+    "lines-between-class-members": "off",
+    "@typescript-eslint/lines-between-class-members": [
+      "error",
+      "always",
+      {
+        "exceptAfterOverload": true
+      }
+    ],
+    "no-empty-function": "off",
+    "@typescript-eslint/no-empty-function": [
+      "error"
+    ],
+    "no-console": "error",
+    "no-invalid-this": "off",
+    "@typescript-eslint/no-invalid-this": [
+      "error"
+    ],
+    "no-redeclare": "off",
+    "@typescript-eslint/no-redeclare": [
+      "error"
+    ],
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "Comment",
+        "message": "The 'Comment' entity should be imported from '@wms/domain'."
+      },
+      {
+        "name": "Location",
+        "message": "The 'Location' entity should be imported from '@wms/domain'."
+      }
+    ],
+    "no-shadow": "off",
+    "@typescript-eslint/no-shadow": [
+      "warn"
+    ],
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
+      }
+    ],
+    "quotes": "off",
+    "@typescript-eslint/quotes": [
+      "error",
+      "single",
+      {
+        "avoidEscape": true
+      }
+    ],
+    "semi": "off",
+    "@typescript-eslint/semi": [
+      "error"
+    ],
+    "space-before-function-paren": "off",
+    "@typescript-eslint/space-before-function-paren": [
+      "error",
+      {
+        "anonymous": "always",
+        "named": "never",
+        "asyncArrow": "always"
+      }
+    ],
+    /* plugin:import */
+    "import/newline-after-import": [
+      "error"
+    ],
+    "import/no-extraneous-dependencies": [
+      "warn",
+      {
+        "devDependencies": false
+      }
+    ],
+    "import/order": [
+      "error",
+      {
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": false
+        },
+        "groups": [
+          [
+            "builtin",
+            "external"
+          ],
+          "parent",
+          "sibling",
+          "index"
+        ]
+      }
+    ],
+    /* plugin:unused-imports */
+    "unused-imports/no-unused-imports-ts": "error",
+    "unused-imports/no-unused-vars-ts": "off",
+    /* eslint built-in rules */
+    "sort-imports": [
+      "error",
+      {
+        "ignoreDeclarationSort": true
+      }
+    ],
+    "jsx-quotes": [
+      "error",
+      "prefer-single"
+    ],
+    "require-atomic-updates": "off",
+    "key-spacing": [
+      "error",
+      {
+        "beforeColon": false,
+        "afterColon": true,
+        "mode": "minimum",
+        "align": "value"
+      }
+    ],
+    "keyword-spacing": [
+      "error",
+      {
+        "before": true,
+        "after": true
+      }
+    ],
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
+    "no-lonely-if": "error",
+    "no-mixed-spaces-and-tabs": "error",
+    "no-multiple-empty-lines": [
+      "error",
+      {
+        "max": 1
+      }
+    ],
+    "no-debugger": "error",
+    "no-tabs": "error",
+    "no-const-assign": "error",
+    "no-duplicate-imports": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          "src/*"
+        ]
+      }
+    ],
+    "arrow-spacing": [
+      "warn",
+      {
+        "before": true,
+        "after": true
+      }
+    ],
+    "quote-props": [
+      "error",
+      "as-needed"
+    ],
+    "no-dupe-args": "error",
+    "no-irregular-whitespace": "warn",
+    "no-var": "error",
+    "no-async-promise-executor": 0,
+    "no-floating-decimal": "error",
+    "no-global-assign": "error",
+    "no-lone-blocks": "error",
+    "no-loop-func": "off",
+    // "no-multi-spaces": "warn",
+    "no-multi-str": "warn",
+    "no-new": "error",
+    "no-new-func": "error",
+    "no-octal": "warn",
+    "no-return-await": "error",
+    "no-throw-literal": "warn",
+    "no-useless-catch": 0,
+    "no-useless-concat": "error",
+    "require-await": "error",
+    "yoda": "error",
+    "no-delete-var": "error",
+    "no-shadow-restricted-names": "error",
+    "capitalized-comments": "off",
+    "no-whitespace-before-property": "error",
+    "block-spacing": 2,
+    "space-before-blocks": 2,
+    "space-in-parens": [
+      "error",
+      "never"
+    ],
+    "space-infix-ops": "error",
+    "spaced-comment": [
+      "error",
+      "always"
+    ],
+    "semi-spacing": [
+      "error",
+      {
+        "before": false,
+        "after": true
+      }
+    ],
+    "object-curly-spacing": [
+      "error",
+      "always",
+      {
+        "arraysInObjects": true,
+        "objectsInObjects": true
+      }
+    ],
+    "array-bracket-spacing": [
+      "error",
+      "never",
+      {
+        "singleValue": false,
+        "objectsInArrays": false,
+        "arraysInArrays": false
+      }
+    ],
+    "no-labels": "error",
+    "no-unused-labels": "error",
+    "eol-last": [
+      "error",
+      "always"
+    ]
+  }
+}
