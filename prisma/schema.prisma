@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Drug {
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String
+  prescription Prescription[]
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  uid        String?      @unique
+  name       String
+  lastName   String
+  email      String
+  dni        String
+  birthDate  DateTime
+  patient    Patient?
+  doctor     Doctor?
+  pharmacist Pharmacist?
+}
+
+model Patient {
+  id           Int            @id @default(autoincrement())
+  doctor       Doctor         @relation(fields: [doctorId], references: [id])
+  doctorId     Int
+  user         User           @relation(fields: [userId], references: [id])
+  userId       Int            @unique
+  prescription Prescription[]
+}
+
+model Doctor {
+  id            Int            @id @default(autoincrement())
+  certification String
+  prescriptions Prescription[]
+  patients      Patient[]
+  user          User           @relation(fields: [userId], references: [id])
+  userId        Int            @unique
+}
+
+model Prescription {
+  id         Int      @id @default(autoincrement())
+  duration   Int
+  frequency  Int
+  drug       Drug     @relation(fields: [drugId], references: [id])
+  drugId     Int
+  indication String
+  patient    Patient  @relation(fields: [patientId], references: [id])
+  patientId  Int
+  Doctor     Doctor?  @relation(fields: [doctorId], references: [id])
+  doctorId   Int?
+  quantity   Int
+  startDate  DateTime
+  endDate    DateTime
+}
+
+model Pharmacist {
+  id            Int    @id @default(autoincrement())
+  certification String
+  user          User   @relation(fields: [userId], references: [id])
+  userId        Int    @unique
+}

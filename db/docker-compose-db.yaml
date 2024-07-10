@@ -1,0 +1,12 @@
+name: 'postgresql-dev'
+services:
+  db:
+    image: 'postgres'
+    container_name: 'postgresql-dev'
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=emed-db
