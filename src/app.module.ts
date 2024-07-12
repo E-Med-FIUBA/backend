@@ -8,6 +8,7 @@ import { PharmacistsModule } from './models/pharmacists/pharmacists.module';
 import { PrescriptionsModule } from './models/prescriptions/prescriptions.module';
 import { DrugsModule } from './models/drugs/drugs.module';
 import { UsersModule } from './models/users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UsersModule } from './models/users/users.module';
     PharmacistsModule,
     PrescriptionsModule,
     UsersModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

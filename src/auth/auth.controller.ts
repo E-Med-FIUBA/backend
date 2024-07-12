@@ -4,7 +4,9 @@ import { LoginDTO } from './dto/login.dto';
 import { ResetPasswordRequest } from './dto/password-reset.dto';
 import { PharmacistRegisterDTO } from '../models/pharmacists/dto/pharmacist-register.dto';
 import { DoctorRegisterDTO } from '../models/doctors/dto/doctor-register.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -20,7 +22,7 @@ export class AuthController {
   registerPharmacist(
     @Body() pharmacist: PharmacistRegisterDTO,
   ): Promise<{ token: string }> {
-    return this.authService.registerDoctor(pharmacist);
+    return this.authService.registerPharmacist(pharmacist);
   }
 
   @Post('login')

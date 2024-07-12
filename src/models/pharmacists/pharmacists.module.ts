@@ -14,5 +14,6 @@ import { UsersModule } from '../users/users.module';
   ],
   controllers: [PharmacistsController],
   providers: [PharmacistsService, PrismaService],
+  exports: [PharmacistsService],
 })
 export class PharmacistsModule {}

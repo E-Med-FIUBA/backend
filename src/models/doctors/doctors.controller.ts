@@ -10,7 +10,9 @@ import {
 import { DoctorDTO } from './dto/doctor.dto';
 import { DoctorsService } from './doctors.service';
 import { AuthGuard } from '../../auth/auth.guard';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('doctors')
 @Controller('doctors')
 @UseGuards(AuthGuard)
 export class DoctorsController {

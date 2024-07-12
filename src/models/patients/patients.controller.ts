@@ -11,7 +11,9 @@ import {
 import { PatientsService } from './patients.service';
 import { PatientDTO } from './dto/patient.dto';
 import { AuthGuard } from '../../auth/auth.guard';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('patients')
 @Controller('patients')
 @UseGuards(AuthGuard)
 export class PatientsController {

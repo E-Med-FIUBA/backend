@@ -13,7 +13,9 @@ import {
 } from '@nestjs/common';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { AuthGuard } from '../../auth/auth.guard';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('prescriptions')
 @Controller('prescriptions')
 @UseGuards(AuthGuard)
 export class PrescriptionsController {

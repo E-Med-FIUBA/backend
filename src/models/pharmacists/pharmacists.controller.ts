@@ -12,7 +12,9 @@ import { PharmacistsService } from './pharmacists.service';
 import { Pharmacist } from '@prisma/client';
 import { PharmacistDTO } from './dto/pharmacist.dto';
 import { AuthGuard } from '../../auth/auth.guard';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('pharmacists')
 @Controller('pharmacists')
 @UseGuards(AuthGuard)
 export class PharmacistsController {
