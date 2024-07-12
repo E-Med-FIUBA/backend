@@ -12,8 +12,4 @@ export class UserDTO {
 
   @IsNotEmpty()
   dni: string;
-
-  @IsDate()
-  @IsNotEmpty()
-  birthDate: Date;
 }

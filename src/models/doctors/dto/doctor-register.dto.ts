@@ -3,7 +3,9 @@ import { UserRegisterDTO } from '../../users/dto/user-register.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class DoctorRegisterDTO extends UserRegisterDTO {
-  @ApiProperty()
   @IsNotEmpty()
-  certification: string;
+  license: string;
+
+  @IsNotEmpty()
+  specialty: string;
 }

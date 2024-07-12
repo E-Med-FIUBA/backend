@@ -22,12 +22,11 @@ model Drug {
 
 model User {
   id         Int         @id @default(autoincrement())
-  uid        String?      @unique
+  uid        String?     @unique
   name       String
   lastName   String
   email      String
   dni        String
-  birthDate  DateTime
   patient    Patient?
   doctor     Doctor?
   pharmacist Pharmacist?
@@ -39,16 +38,18 @@ model Patient {
   doctorId     Int
   user         User           @relation(fields: [userId], references: [id])
   userId       Int            @unique
+  birthDate    DateTime
   prescription Prescription[]
 }
 
 model Doctor {
   id            Int            @id @default(autoincrement())
-  certification String
+  license       String
   prescriptions Prescription[]
   patients      Patient[]
   user          User           @relation(fields: [userId], references: [id])
   userId        Int            @unique
+  specialty     String
 }
 
 model Prescription {
@@ -68,8 +69,8 @@ model Prescription {
 }
 
 model Pharmacist {
-  id            Int    @id @default(autoincrement())
-  certification String
-  user          User   @relation(fields: [userId], references: [id])
-  userId        Int    @unique
+  id      Int    @id @default(autoincrement())
+  license String
+  user    User   @relation(fields: [userId], references: [id])
+  userId  Int    @unique
 }
