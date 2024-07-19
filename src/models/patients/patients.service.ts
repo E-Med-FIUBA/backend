@@ -16,6 +16,7 @@ export class PatientsService {
       data: {
         userId: user.id,
         doctorId: data.doctorId,
+        birthDate: data.birthDate,
       },
     });
   }

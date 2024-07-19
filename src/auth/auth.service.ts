@@ -85,7 +85,6 @@ export class AuthService {
       name: user.name,
       lastName: user.lastName,
       dni: user.dni,
-      birthDate: user.birthDate,
       uid: credentials.user.uid,
     };
     const createdUser = await this.usersService.create(userData);
@@ -98,7 +97,8 @@ export class AuthService {
       await this.createUser(doctor);
     await this.doctorsService.create({
       userId: user.id,
-      certification: doctor.certification,
+      license: doctor.license,
+      specialty: doctor.specialty,
     });
 
     return { token: await userCredentials.user.getIdToken() };
@@ -109,7 +109,7 @@ export class AuthService {
       await this.createUser(pharmacist);
     await this.pharmacistsService.create({
       userId: user.id,
-      certification: pharmacist.certification,
+      license: pharmacist.license,
     });
 
     return { token: await userCredentials.user.getIdToken() };

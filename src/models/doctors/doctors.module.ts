@@ -12,10 +12,10 @@ import { UsersModule } from '../users/users.module';
       envFilePath: ['.env'],
     }),
     PatientsModule,
-    UsersModule
+    UsersModule,
   ],
   controllers: [DoctorsController],
   providers: [DoctorsService, PrismaService],
-  exports: [DoctorsService]
+  exports: [DoctorsService],
 })
 export class DoctorsModule {}

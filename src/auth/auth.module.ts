@@ -7,7 +7,12 @@ import { AuthService } from './auth.service';
 import { PharmacistsModule } from '../models/pharmacists/pharmacists.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(), DoctorsModule, UsersModule, PharmacistsModule],
+  imports: [
+    ConfigModule.forRoot(),
+    DoctorsModule,
+    UsersModule,
+    PharmacistsModule,
+  ],
   exports: [],
   providers: [AuthService],
   controllers: [AuthController],

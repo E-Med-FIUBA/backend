@@ -10,7 +10,7 @@ import { UsersModule } from '../users/users.module';
     ConfigModule.forRoot({
       envFilePath: ['.env'],
     }),
-    UsersModule
+    UsersModule,
   ],
   controllers: [PharmacistsController],
   providers: [PharmacistsService, PrismaService],

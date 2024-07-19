@@ -3,5 +3,5 @@ import { UserDTO } from '../../users/dto/user.dto';
 
 export class PharmacistDTO extends UserDTO {
   @IsNotEmpty()
-  certification: string;
+  license: string;
 }

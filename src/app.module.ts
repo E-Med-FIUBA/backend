@@ -19,7 +19,7 @@ import { AuthModule } from './auth/auth.module';
     PharmacistsModule,
     PrescriptionsModule,
     UsersModule,
-    AuthModule
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
