@@ -3,7 +3,7 @@ services:
   db:
     image: 'postgres'
     container_name: 'postgresql-dev'
-    restart: always
+    restart: 'on-failure'
     ports:
       - '5432:5432'
     environment:
