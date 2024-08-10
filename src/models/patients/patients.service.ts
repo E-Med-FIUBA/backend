@@ -1,23 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PatientDTO } from './dto/patient.dto';
-import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class PatientsService {
-  constructor(
-    private prisma: PrismaService,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(data: PatientDTO) {
-    const user = await this.usersService.create({ ...data, uid: null });
     return this.prisma.patient.create({
-      data: {
-        userId: user.id,
-        doctorId: data.doctorId,
-        birthDate: data.birthDate,
-      },
+      data,
     });
   }
 
@@ -54,9 +45,6 @@ export class PatientsService {
     return this.prisma.patient.findMany({
       where: {
         doctorId: id,
-      },
-      include: {
-        user: true,
       },
     });
   }
