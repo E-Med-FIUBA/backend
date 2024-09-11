@@ -25,16 +25,19 @@ export class AuthController {
     return this.authService.registerPharmacist(pharmacist);
   }
 
+  @HttpCode(200)
   @Post('login')
   login(@Body() loginInfo: LoginDTO): Promise<{ token: string }> {
     return this.authService.login(loginInfo);
   }
 
+  @HttpCode(200)
   @Post('logout')
   logout() {
     return this.authService.logout();
   }
 
+  @HttpCode(200)
   @Post('password-reset')
   async resetPassword(@Body() body: ResetPasswordRequest) {
     await this.authService.resetPassword(body.email);
