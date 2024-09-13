@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   create(data: Omit<User, 'id'>) {
     return this.prisma.user.create({
@@ -25,7 +25,7 @@ export class UsersService {
     });
   }
 
-  update(id: number, data: UserDTO): Promise<User> {
+  update(id: number, data: Partial<User>): Promise<User> {
     return this.prisma.user.update({
       where: {
         id,

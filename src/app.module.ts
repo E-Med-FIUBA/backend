@@ -9,10 +9,11 @@ import { PrescriptionsModule } from './models/prescriptions/prescriptions.module
 import { DrugsModule } from './models/drugs/drugs.module';
 import { UsersModule } from './models/users/users.module';
 import { AuthModule } from './auth/auth.module';
-
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     DoctorsModule,
     DrugsModule,
     PatientsModule,
@@ -24,4 +25,4 @@ import { AuthModule } from './auth/auth.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
