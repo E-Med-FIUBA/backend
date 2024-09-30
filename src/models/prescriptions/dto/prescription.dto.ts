@@ -1,4 +1,4 @@
-import { IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class PrescriptionDTO {
   @IsNumber()
@@ -25,11 +25,11 @@ export class PrescriptionDTO {
   @IsNotEmpty()
   duration: number;
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
   startDate: Date;
 
-  @IsNumber()
+  @IsDateString()
   @IsNotEmpty()
   endDate: Date;
 

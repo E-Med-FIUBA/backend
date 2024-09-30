@@ -53,19 +53,20 @@ model Doctor {
 }
 
 model Prescription {
-  id         Int      @id @default(autoincrement())
-  duration   Int
-  frequency  Int
-  drug       Drug     @relation(fields: [drugId], references: [id])
-  drugId     Int
-  indication String
-  patient    Patient  @relation(fields: [patientId], references: [id])
-  patientId  Int
-  Doctor     Doctor?  @relation(fields: [doctorId], references: [id])
-  doctorId   Int?
-  quantity   Int
-  startDate  DateTime
-  endDate    DateTime
+  id               Int                @id @default(autoincrement())
+  duration         Int
+  frequency        Int
+  drug             Drug               @relation(fields: [drugId], references: [id])
+  drugId           Int
+  indication       String
+  patient          Patient            @relation(fields: [patientId], references: [id])
+  patientId        Int
+  Doctor           Doctor?            @relation(fields: [doctorId], references: [id])
+  doctorId         Int?
+  quantity         Int
+  startDate        DateTime
+  endDate          DateTime
+  PrescriptionNode PrescriptionNode[]
 }
 
 model Pharmacist {
@@ -73,4 +74,22 @@ model Pharmacist {
   license String
   user    User   @relation(fields: [userId], references: [id])
   userId  Int    @unique
+}
+
+enum ChildSide {
+  LEFT
+  RIGHT
+}
+
+model PrescriptionNode {
+  id           Int                @id @default(autoincrement())
+  parent_id    Int?
+  parent       PrescriptionNode?  @relation("ParentChildren", fields: [parent_id], references: [id])
+  children     PrescriptionNode[] @relation("ParentChildren")
+  side         ChildSide?
+  hash         String
+  key          Int?
+  prescription Prescription?      @relation(fields: [key], references: [id])
+
+  @@unique([parent_id, side])
 }
