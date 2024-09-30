@@ -10,3 +10,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=emed-db
+    volumes:
+      - 'emed-db-data:/var/lib/postgresql/data'
+
+volumes:
+  emed-db-data:
