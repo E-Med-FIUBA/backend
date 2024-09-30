@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { ChildSide, Prescription } from '@prisma/client';
+import { poseidon2, poseidon9 } from 'poseidon-lite';
+import { Decimal } from '@prisma/client/runtime/library';
 
 const keyLength = 4; // key length in bits
 
@@ -24,7 +26,7 @@ export class PrescriptionsService {
       if (!root) {
         root = await tx.prescriptionNode.create({
           data: {
-            hash: '0',
+            hash: new Decimal(0),
           },
         });
       }
@@ -38,27 +40,42 @@ export class PrescriptionsService {
         const side = bit === '0' ? ChildSide.LEFT : ChildSide.RIGHT;
         if (side === ChildSide.LEFT) {
           // we need to go left
-          child = await tx.prescriptionNode.findFirst({
+          child = await tx.prescriptionNode.findUnique({
             where: {
-              parent_id: currentNode.id,
-              side: ChildSide.LEFT,
+              unique_parent_side: {
+                parent_id: currentNode.id,
+                side: ChildSide.LEFT,
+              },
             },
           });
         } else {
           // we need to go right
-          child = await tx.prescriptionNode.findFirst({
+          child = await tx.prescriptionNode.findUnique({
             where: {
-              parent_id: currentNode.id,
-              side: ChildSide.RIGHT,
+              unique_parent_side: {
+                parent_id: currentNode.id,
+                side: ChildSide.RIGHT,
+              },
             },
           });
         }
 
         if (!child) {
           // we need to create a new node
+          const hash = poseidon9([
+            prescription.id,
+            prescription.doctorId,
+            prescription.drugId,
+            prescription.patientId,
+            prescription.quantity,
+            prescription.startDate.getTime(),
+            prescription.endDate.getTime(),
+            prescription.duration,
+            prescription.frequency,
+          ]);
           currentNode = await tx.prescriptionNode.create({
             data: {
-              hash: '0',
+              hash: new Decimal(hash.toString()),
               prescription: {
                 connect: {
                   id: prescription.id,
@@ -83,11 +100,11 @@ export class PrescriptionsService {
             },
             data: {
               key: null,
-              hash: '0',
+              hash: new Decimal(0),
               children: {
                 create: [
                   {
-                    hash: '0',
+                    hash: child.hash,
                     key: child.key,
                     side:
                       collisionKey.charAt(i + 1) === '0'
@@ -106,8 +123,55 @@ export class PrescriptionsService {
         currentNode = child;
       }
 
+      currentNode = await tx.prescriptionNode.findUnique({
+        where: {
+          id: currentNode.parent_id,
+        },
+      });
+
       // once created, we need to update the hash of the nodes
-      console.log('currentNode', currentNode);
+      while (currentNode) {
+        const leftChild = await tx.prescriptionNode.findUnique({
+          where: {
+            unique_parent_side: {
+              parent_id: currentNode.id,
+              side: ChildSide.LEFT,
+            },
+          },
+        });
+
+        const rightChild = await tx.prescriptionNode.findUnique({
+          where: {
+            unique_parent_side: {
+              parent_id: currentNode.id,
+              side: ChildSide.RIGHT,
+            },
+          },
+        });
+
+        const leftHash = BigInt(leftChild?.hash.toNumber() || 0);
+        const rightHash = BigInt(rightChild?.hash.toNumber() || 0);
+        const currentHash = poseidon2([leftHash, rightHash]);
+
+        await tx.prescriptionNode.update({
+          where: {
+            id: currentNode.id,
+          },
+          data: {
+            hash: new Decimal(currentHash.toString()),
+          },
+        });
+
+        if (!currentNode.parent_id) {
+          break;
+        }
+
+        currentNode = await tx.prescriptionNode.findUnique({
+          where: {
+            id: currentNode.parent_id,
+          },
+        });
+      }
 
       return prescription;
     });

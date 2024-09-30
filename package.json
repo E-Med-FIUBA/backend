@@ -37,6 +37,7 @@
     "firebase": "^10.12.3",
     "firebase-admin": "^12.2.0",
     "morgan": "^1.10.0",
+    "poseidon-lite": "^0.3.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
   },
