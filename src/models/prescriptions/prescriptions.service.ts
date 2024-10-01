@@ -2,20 +2,46 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { ChildSide, Prescription } from '@prisma/client';
-import { poseidon2, poseidon9 } from 'poseidon-lite';
+import { poseidon1, poseidon2, poseidon3, poseidon9 } from 'poseidon-lite';
 import { Decimal } from '@prisma/client/runtime/library';
+import * as snarkjs from 'snarkjs';
 
 const keyLength = 4; // key length in bits
 
 @Injectable()
 export class PrescriptionsService {
-  constructor(private prisma: PrismaService) {}
+  private precalculatedHashes: Map<number, bigint> = new Map();
+  private hash0 = (left: bigint, right: bigint) => poseidon2([left, right]);
+  private hash1 = (key: bigint, value: bigint) => poseidon3([key, value, 1n]);
+  private hashPrescription = (prescription: Prescription) =>
+    poseidon9([
+      prescription.id,
+      prescription.doctorId,
+      prescription.drugId,
+      prescription.patientId,
+      prescription.quantity,
+      prescription.startDate.getTime(),
+      prescription.endDate.getTime(),
+      prescription.duration,
+      prescription.frequency,
+    ]);
+
+  constructor(private prisma: PrismaService) {
+    for (let i = 0; i < 16; i++) {
+      const previous = i === 0 ? 0n : this.precalculatedHashes.get(i - 1);
+      this.precalculatedHashes.set(i, poseidon1([previous]));
+    }
+    console.log(this.precalculatedHashes);
+  }
 
   async create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(async (tx) => {
       const prescription = await tx.prescription.create({
         data,
       });
+
+      const hashedValue = this.hashPrescription(prescription);
+      const hash = this.hash1(0n, hashedValue);
 
       let root = await tx.prescriptionNode.findFirst({
         where: {
@@ -26,18 +52,46 @@ export class PrescriptionsService {
       if (!root) {
         root = await tx.prescriptionNode.create({
           data: {
-            hash: new Decimal(0),
+            hash: new Decimal(hash.toString()),
+            prescription: {
+              connect: {
+                id: prescription.id,
+              },
+            },
           },
         });
+
+        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+          {
+            fnc: [1, 0],
+            oldRoot: 0n,
+            newRoot: hash,
+            siblings: [0n, 0n, 0n, 0n],
+            oldKey: 0,
+            oldValue: 0,
+            isOld0: 1,
+            newKey: 0n,
+            newValue: hashedValue,
+          },
+          'prescription_validation.wasm',
+          'circuit_final.zkey',
+        );
+
+        console.log(proof, publicSignals);
+        return prescription;
       }
 
-      const binaryKey = prescription.id.toString(2).padStart(keyLength, '0');
+      const binaryKey = prescription.id
+        .toString(2)
+        .split('')
+        .map((x) => x === '1')
+        .reverse();
 
       let currentNode = root;
       for (let i = 0; i < binaryKey.length; i++) {
         const bit = binaryKey[i];
         let child = null;
-        const side = bit === '0' ? ChildSide.LEFT : ChildSide.RIGHT;
+        const side = bit ? ChildSide.LEFT : ChildSide.RIGHT;
         if (side === ChildSide.LEFT) {
           // we need to go left
           child = await tx.prescriptionNode.findUnique({
@@ -62,17 +116,7 @@ export class PrescriptionsService {
 
         if (!child) {
           // we need to create a new node
-          const hash = poseidon9([
-            prescription.id,
-            prescription.doctorId,
-            prescription.drugId,
-            prescription.patientId,
-            prescription.quantity,
-            prescription.startDate.getTime(),
-            prescription.endDate.getTime(),
-            prescription.duration,
-            prescription.frequency,
-          ]);
+
           currentNode = await tx.prescriptionNode.create({
             data: {
               hash: new Decimal(hash.toString()),
@@ -93,7 +137,7 @@ export class PrescriptionsService {
         } else if (child.key) {
           // collision
           // we need to split the node
-          const collisionKey = child.key.toString(2).padStart(keyLength, '0');
+          const collisionKey = child.key.toString(2).split('').reverse();
           const newParent = await tx.prescriptionNode.update({
             where: {
               id: child.id,
@@ -106,10 +150,9 @@ export class PrescriptionsService {
                   {
                     hash: child.hash,
                     key: child.key,
-                    side:
-                      collisionKey.charAt(i + 1) === '0'
-                        ? ChildSide.LEFT
-                        : ChildSide.RIGHT,
+                    side: collisionKey[i + 1]
+                      ? ChildSide.LEFT
+                      : ChildSide.RIGHT,
                   },
                 ],
               },
@@ -123,7 +166,7 @@ export class PrescriptionsService {
         currentNode = child;
       }
 
-      let siblings = [];
+      const siblings = [];
       let currentSide = currentNode.side;
       currentNode = await tx.prescriptionNode.findUnique({
         where: {
@@ -132,6 +175,7 @@ export class PrescriptionsService {
       });
 
       // once created, we need to update the hash of the nodes
+      let newRootHash = BigInt(0);
       while (currentNode) {
         const leftChild = await tx.prescriptionNode.findUnique({
           where: {
@@ -153,7 +197,7 @@ export class PrescriptionsService {
 
         const leftHash = BigInt(leftChild?.hash.toNumber() || 0);
         const rightHash = BigInt(rightChild?.hash.toNumber() || 0);
-        const currentHash = poseidon2([leftHash, rightHash]);
+        const currentHash = this.hash0(leftHash, rightHash);
 
         await tx.prescriptionNode.update({
           where: {
@@ -167,6 +211,7 @@ export class PrescriptionsService {
         siblings.push(currentSide === ChildSide.LEFT ? rightHash : leftHash);
 
         if (!currentNode.parent_id) {
+          newRootHash = currentHash;
           break;
         }
 
@@ -178,8 +223,52 @@ export class PrescriptionsService {
         });
       }
 
-      console.log(siblings);
+      while (siblings.length < 4) {
+        siblings.push(0n);
+      }
+
       // TODO: While updating the hash of the nodes, save the siblings of the current node to generate the proof
+
+      // Generate the proof
+      console.log({
+        fnc: [1, 0],
+        oldRoot: BigInt(root.hash.toNumber()),
+        newRoot: newRootHash,
+        siblings: siblings,
+        oldKey: 0,
+        oldValue: 0,
+        isOld0: 1,
+        newKey: prescription.id,
+        newValue: poseidon9([
+          prescription.id,
+          prescription.doctorId,
+          prescription.drugId,
+          prescription.patientId,
+          prescription.quantity,
+          prescription.startDate.getTime(),
+          prescription.endDate.getTime(),
+          prescription.duration,
+          prescription.frequency,
+        ]),
+      });
+
+      // const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+      //   {
+      //     fnc: [1, 0],
+      //     oldRoot: BigInt(root.hash.toNumber()),
+      //     newRoot: newRootHash,
+      //     siblings: siblings,
+      //     oldKey: 0,
+      //     oldValue: 0,
+      //     isOld0: 1,
+      //     newKey: prescription.id,
+      //     newValue: hash,
+      //   },
+      //   'prescription_validation.wasm',
+      //   'circuit_final.zkey',
+      // );
+
+      // console.log(proof, publicSignals);
 
       return prescription;
     });
