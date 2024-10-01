@@ -3,16 +3,29 @@ import { PrismaService } from '../../prisma.service';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { ChildSide, Prescription } from '@prisma/client';
 import { poseidon1, poseidon2, poseidon3, poseidon9 } from 'poseidon-lite';
-import { Decimal } from '@prisma/client/runtime/library';
 import * as snarkjs from 'snarkjs';
 
 const keyLength = 4; // key length in bits
+
+const padArray = <T>(arr: Array<T>, length: number, paddingValue: T) => {
+  return arr.concat(Array(length - arr.length).fill(paddingValue));
+};
+
+const splitKey = (_key: number) => {
+  const key = _key
+    .toString(2)
+    .split('')
+    .map((x) => x === '1')
+    .reverse();
+  return padArray(key, keyLength, false);
+};
 
 @Injectable()
 export class PrescriptionsService {
   private precalculatedHashes: Map<number, bigint> = new Map();
   private hash0 = (left: bigint, right: bigint) => poseidon2([left, right]);
-  private hash1 = (key: bigint, value: bigint) => poseidon3([key, value, 1n]);
+  private hash1 = (key: bigint | number, value: bigint) =>
+    poseidon3([key, value, 1n]);
   private hashPrescription = (prescription: Prescription) =>
     poseidon9([
       prescription.id,
@@ -41,7 +54,9 @@ export class PrescriptionsService {
       });
 
       const hashedValue = this.hashPrescription(prescription);
-      const hash = this.hash1(0n, hashedValue);
+      const hash = this.hash1(prescription.id, hashedValue);
+      console.log('hashedValue', hashedValue, 'id', prescription.id);
+      console.log('hash', hash);
 
       let root = await tx.prescriptionNode.findFirst({
         where: {
@@ -52,7 +67,7 @@ export class PrescriptionsService {
       if (!root) {
         root = await tx.prescriptionNode.create({
           data: {
-            hash: new Decimal(hash.toString()),
+            hash: hash.toString(),
             prescription: {
               connect: {
                 id: prescription.id,
@@ -70,56 +85,92 @@ export class PrescriptionsService {
             oldKey: 0,
             oldValue: 0,
             isOld0: 1,
-            newKey: 0n,
+            newKey: prescription.id,
             newValue: hashedValue,
           },
           'prescription_validation.wasm',
           'circuit_final.zkey',
         );
 
-        console.log(proof, publicSignals);
         return prescription;
       }
 
-      const binaryKey = prescription.id
-        .toString(2)
-        .split('')
-        .map((x) => x === '1')
-        .reverse();
-
+      const binaryKey = splitKey(prescription.id);
       let currentNode = root;
+
+      let siblings = [];
+
       for (let i = 0; i < binaryKey.length; i++) {
-        const bit = binaryKey[i];
-        let child = null;
-        const side = bit ? ChildSide.LEFT : ChildSide.RIGHT;
-        if (side === ChildSide.LEFT) {
-          // we need to go left
-          child = await tx.prescriptionNode.findUnique({
-            where: {
-              unique_parent_side: {
-                parent_id: currentNode.id,
-                side: ChildSide.LEFT,
-              },
+        const side = binaryKey[i] ? ChildSide.RIGHT : ChildSide.LEFT;
+        const sibling = await tx.prescriptionNode.findUnique({
+          where: {
+            unique_parent_side: {
+              parent_id: currentNode.id,
+              side: side === ChildSide.RIGHT ? ChildSide.LEFT : ChildSide.RIGHT,
             },
-          });
-        } else {
-          // we need to go right
-          child = await tx.prescriptionNode.findUnique({
-            where: {
-              unique_parent_side: {
-                parent_id: currentNode.id,
-                side: ChildSide.RIGHT,
-              },
+          },
+        });
+
+        console.log('sibling', sibling);
+
+        siblings.push(sibling ? BigInt(sibling.hash) : 0n);
+        const child = await tx.prescriptionNode.findUnique({
+          where: {
+            unique_parent_side: {
+              parent_id: currentNode.id,
+              side,
             },
-          });
-        }
+          },
+        });
 
         if (!child) {
-          // we need to create a new node
+          break;
+        }
+        currentNode = child;
+      }
 
+      currentNode = root;
+      for (let i = 0; i < binaryKey.length; i++) {
+        if (currentNode.key) {
+          // collision
+          // we need to split the node
+          const collisionKey = splitKey(currentNode.key);
+          const newParent = await tx.prescriptionNode.update({
+            where: {
+              id: currentNode.id,
+            },
+            data: {
+              key: null,
+              hash: '0',
+              children: {
+                create: [
+                  {
+                    hash: currentNode.hash,
+                    key: currentNode.key,
+                    side: collisionKey[i] ? ChildSide.RIGHT : ChildSide.LEFT,
+                  },
+                ],
+              },
+            },
+          });
+          currentNode = newParent;
+        }
+
+        const bit = binaryKey[i];
+        const side = bit ? ChildSide.RIGHT : ChildSide.LEFT;
+        const child = await tx.prescriptionNode.findUnique({
+          where: {
+            unique_parent_side: {
+              parent_id: currentNode.id,
+              side,
+            },
+          },
+        });
+
+        if (!child) {
           currentNode = await tx.prescriptionNode.create({
             data: {
-              hash: new Decimal(hash.toString()),
+              hash: hash.toString(),
               prescription: {
                 connect: {
                   id: prescription.id,
@@ -134,48 +185,19 @@ export class PrescriptionsService {
             },
           });
           break;
-        } else if (child.key) {
-          // collision
-          // we need to split the node
-          const collisionKey = child.key.toString(2).split('').reverse();
-          const newParent = await tx.prescriptionNode.update({
-            where: {
-              id: child.id,
-            },
-            data: {
-              key: null,
-              hash: new Decimal(0),
-              children: {
-                create: [
-                  {
-                    hash: child.hash,
-                    key: child.key,
-                    side: collisionKey[i + 1]
-                      ? ChildSide.LEFT
-                      : ChildSide.RIGHT,
-                  },
-                ],
-              },
-            },
-          });
-
-          currentNode = newParent;
-          continue;
         }
 
         currentNode = child;
       }
 
-      const siblings = [];
-      let currentSide = currentNode.side;
       currentNode = await tx.prescriptionNode.findUnique({
         where: {
           id: currentNode.parent_id,
         },
       });
 
-      // once created, we need to update the hash of the nodes
-      let newRootHash = BigInt(0);
+      // // once created, we need to update the hash of the nodes
+      let newRootHash = 0n;
       while (currentNode) {
         const leftChild = await tx.prescriptionNode.findUnique({
           where: {
@@ -195,8 +217,8 @@ export class PrescriptionsService {
           },
         });
 
-        const leftHash = BigInt(leftChild?.hash.toNumber() || 0);
-        const rightHash = BigInt(rightChild?.hash.toNumber() || 0);
+        const leftHash = leftChild ? BigInt(leftChild.hash) : 0n;
+        const rightHash = rightChild ? BigInt(rightChild.hash) : 0n;
         const currentHash = this.hash0(leftHash, rightHash);
 
         await tx.prescriptionNode.update({
@@ -204,18 +226,15 @@ export class PrescriptionsService {
             id: currentNode.id,
           },
           data: {
-            hash: new Decimal(currentHash.toString()),
+            hash: currentHash.toString(),
           },
         });
 
-        siblings.push(currentSide === ChildSide.LEFT ? rightHash : leftHash);
-
-        if (!currentNode.parent_id) {
+        if (currentNode.parent_id === null) {
           newRootHash = currentHash;
           break;
         }
 
-        currentSide = currentNode.side;
         currentNode = await tx.prescriptionNode.findUnique({
           where: {
             id: currentNode.parent_id,
@@ -223,50 +242,49 @@ export class PrescriptionsService {
         });
       }
 
-      while (siblings.length < 4) {
-        siblings.push(0n);
-      }
+      siblings = padArray(siblings, 4, 0n);
+      // // Generate the proof
 
-      // TODO: While updating the hash of the nodes, save the siblings of the current node to generate the proof
-
-      // Generate the proof
-      console.log({
-        fnc: [1, 0],
-        oldRoot: BigInt(root.hash.toNumber()),
-        newRoot: newRootHash,
-        siblings: siblings,
-        oldKey: 0,
-        oldValue: 0,
-        isOld0: 1,
-        newKey: prescription.id,
-        newValue: poseidon9([
-          prescription.id,
-          prescription.doctorId,
-          prescription.drugId,
-          prescription.patientId,
-          prescription.quantity,
-          prescription.startDate.getTime(),
-          prescription.endDate.getTime(),
-          prescription.duration,
-          prescription.frequency,
-        ]),
+      const latestValue = await tx.prescriptionNode.findFirst({
+        where: {
+          NOT: {
+            key: prescription.id,
+          },
+        },
+        orderBy: {
+          id: 'desc',
+        },
+        include: {
+          prescription: true,
+        },
       });
 
-      // const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-      //   {
-      //     fnc: [1, 0],
-      //     oldRoot: BigInt(root.hash.toNumber()),
-      //     newRoot: newRootHash,
-      //     siblings: siblings,
-      //     oldKey: 0,
-      //     oldValue: 0,
-      //     isOld0: 1,
-      //     newKey: prescription.id,
-      //     newValue: hash,
-      //   },
-      //   'prescription_validation.wasm',
-      //   'circuit_final.zkey',
-      // );
+      console.log({
+        fnc: [1, 0],
+        oldRoot: BigInt(root.hash),
+        newRoot: newRootHash,
+        siblings: siblings,
+        oldKey: latestValue.key,
+        oldValue: this.hashPrescription(latestValue.prescription),
+        isOld0: 0,
+        newKey: prescription.id,
+        newValue: hashedValue,
+      });
+      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+        {
+          fnc: [1, 0],
+          oldRoot: BigInt(root.hash),
+          newRoot: newRootHash,
+          siblings: siblings,
+          oldKey: latestValue.key,
+          oldValue: this.hashPrescription(latestValue.prescription),
+          isOld0: 0,
+          newKey: prescription.id,
+          newValue: hashedValue,
+        },
+        'prescription_validation.wasm',
+        'circuit_final.zkey',
+      );
 
       // console.log(proof, publicSignals);
 

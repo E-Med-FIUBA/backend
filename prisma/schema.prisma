@@ -87,7 +87,7 @@ model PrescriptionNode {
   parent       PrescriptionNode?  @relation("ParentChildren", fields: [parent_id], references: [id])
   children     PrescriptionNode[] @relation("ParentChildren")
   side         ChildSide?
-  hash         Decimal            @db.Decimal(78, 0)
+  hash         String
   key          Int?
   prescription Prescription?      @relation(fields: [key], references: [id])
 
