@@ -123,6 +123,8 @@ export class PrescriptionsService {
         currentNode = child;
       }
 
+      let siblings = [];
+      let currentSide = currentNode.side;
       currentNode = await tx.prescriptionNode.findUnique({
         where: {
           id: currentNode.parent_id,
@@ -162,16 +164,22 @@ export class PrescriptionsService {
           },
         });
 
+        siblings.push(currentSide === ChildSide.LEFT ? rightHash : leftHash);
+
         if (!currentNode.parent_id) {
           break;
         }
 
+        currentSide = currentNode.side;
         currentNode = await tx.prescriptionNode.findUnique({
           where: {
             id: currentNode.parent_id,
           },
         });
       }
+
+      console.log(siblings);
+      // TODO: While updating the hash of the nodes, save the siblings of the current node to generate the proof
 
       return prescription;
     });
