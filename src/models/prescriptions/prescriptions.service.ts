@@ -22,7 +22,6 @@ const splitKey = (_key: number) => {
 
 @Injectable()
 export class PrescriptionsService {
-  private precalculatedHashes: Map<number, bigint> = new Map();
   private hash0 = (left: bigint, right: bigint) => poseidon2([left, right]);
   private hash1 = (key: bigint | number, value: bigint) =>
     poseidon3([key, value, 1n]);
@@ -39,24 +38,71 @@ export class PrescriptionsService {
       prescription.frequency,
     ]);
 
-  constructor(private prisma: PrismaService) {
-    for (let i = 0; i < 16; i++) {
-      const previous = i === 0 ? 0n : this.precalculatedHashes.get(i - 1);
-      this.precalculatedHashes.set(i, poseidon1([previous]));
-    }
-    console.log(this.precalculatedHashes);
-  }
+  constructor(private prisma: PrismaService) {}
 
   async create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(async (tx) => {
+      const doctorRoot = await this.prisma.doctorNode.findFirst({
+        where: {
+          parent: null,
+        },
+      });
+
+      if (!doctorRoot) {
+        throw new Error('Doctor tree not initialized');
+      }
+
+      const doctorBinaryKey = splitKey(data.doctorId);
+      let doctorCurrentNode = doctorRoot;
+      const doctorSiblings = [];
+
+      for (let i = 0; i < doctorBinaryKey.length; i++) {
+        const side = doctorBinaryKey[i] ? ChildSide.RIGHT : ChildSide.LEFT;
+        const sibling = await tx.doctorNode.findUnique({
+          where: {
+            unique_parent_side: {
+              parent_id: doctorCurrentNode.id,
+              side: side === ChildSide.RIGHT ? ChildSide.LEFT : ChildSide.RIGHT,
+            },
+          },
+        });
+
+        doctorSiblings.push(sibling ? BigInt(sibling.hash) : 0n);
+        const child = await tx.doctorNode.findUnique({
+          where: {
+            unique_parent_side: {
+              parent_id: doctorCurrentNode.id,
+              side,
+            },
+          },
+        });
+
+        if (!child) {
+          break;
+        }
+        doctorCurrentNode = child;
+      }
+
+      while (doctorSiblings.length < 4) {
+        doctorSiblings.push(0n);
+      }
+
+      const doctor = await tx.doctor.findUnique({
+        where: {
+          id: data.doctorId,
+        },
+      });
+
+      if (!doctor) {
+        throw new Error('Doctor not found');
+      }
+
       const prescription = await tx.prescription.create({
         data,
       });
 
       const hashedValue = this.hashPrescription(prescription);
       const hash = this.hash1(prescription.id, hashedValue);
-      console.log('hashedValue', hashedValue, 'id', prescription.id);
-      console.log('hash', hash);
 
       let root = await tx.prescriptionNode.findFirst({
         where: {
@@ -76,6 +122,22 @@ export class PrescriptionsService {
           },
         });
 
+        console.log({
+          fnc: [1, 0],
+          oldRoot: 0n,
+          newRoot: hash,
+          siblings: [0n, 0n, 0n, 0n],
+          oldKey: 0,
+          oldValue: 0,
+          isOld0: 1,
+          newKey: prescription.id,
+          newValue: hashedValue,
+          doctorRoot: BigInt(doctorRoot.hash),
+          doctorSiblings: doctorSiblings,
+          doctorKey: data.doctorId,
+          doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
+        });
+
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(
           {
             fnc: [1, 0],
@@ -87,9 +149,13 @@ export class PrescriptionsService {
             isOld0: 1,
             newKey: prescription.id,
             newValue: hashedValue,
+            doctorRoot: BigInt(doctorRoot.hash),
+            doctorSiblings: doctorSiblings,
+            doctorKey: data.doctorId,
+            doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
           },
           'prescription_validation.wasm',
-          'circuit_final.zkey',
+          'prescription_circuit_final.zkey',
         );
 
         return prescription;
@@ -110,8 +176,6 @@ export class PrescriptionsService {
             },
           },
         });
-
-        console.log('sibling', sibling);
 
         siblings.push(sibling ? BigInt(sibling.hash) : 0n);
         const child = await tx.prescriptionNode.findUnique({
@@ -281,9 +345,13 @@ export class PrescriptionsService {
           isOld0: 0,
           newKey: prescription.id,
           newValue: hashedValue,
+          doctorRoot: BigInt(doctorRoot.hash),
+          doctorSiblings: doctorSiblings,
+          doctorKey: data.doctorId,
+          doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
         },
         'prescription_validation.wasm',
-        'circuit_final.zkey',
+        'prescription_circuit_final.zkey',
       );
 
       // console.log(proof, publicSignals);

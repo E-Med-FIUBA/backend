@@ -50,6 +50,8 @@ model Doctor {
   user          User           @relation(fields: [userId], references: [id])
   userId        Int            @unique
   specialty     String
+
+  DoctorNode DoctorNode[]
 }
 
 model Prescription {
@@ -90,6 +92,20 @@ model PrescriptionNode {
   hash         String
   key          Int?
   prescription Prescription?      @relation(fields: [key], references: [id])
+
+  // Unique constraint for parent_id and side
+  @@unique(name: "unique_parent_side", [parent_id, side])
+}
+
+model DoctorNode {
+  id        Int          @id @default(autoincrement())
+  parent_id Int?
+  parent    DoctorNode?  @relation("ParentChildren", fields: [parent_id], references: [id])
+  children  DoctorNode[] @relation("ParentChildren")
+  side      ChildSide?
+  hash      String
+  key       Int?
+  doctor    Doctor?      @relation(fields: [key], references: [id])
 
   // Unique constraint for parent_id and side
   @@unique(name: "unique_parent_side", [parent_id, side])
