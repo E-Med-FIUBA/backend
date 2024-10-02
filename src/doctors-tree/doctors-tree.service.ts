@@ -60,9 +60,15 @@ export class DoctorsTreeService {
     const hash = this.hash1(doctor.id, hashedValue);
     const latestValue = await this.getLatest(tx);
     const binaryKey = splitKey(doctor.id);
-    const siblings = await this.getSiblings(root, binaryKey, tx);
+    const siblings = await this._getSiblings(root, binaryKey, tx);
 
-    let currentNode = await this.insertNode(binaryKey, doctor.id, hash, tx);
+    let currentNode = await this.insertNode(
+      root,
+      binaryKey,
+      doctor.id,
+      hash,
+      tx,
+    );
     currentNode = await this.findNodeById(currentNode.parent_id);
     const newRootHash = await this.updateHashes(currentNode, tx);
 
@@ -79,7 +85,7 @@ export class DoctorsTreeService {
     };
   }
 
-  async getSiblings(
+  async _getSiblings(
     root: DoctorNode,
     binaryKey: boolean[],
     tx: PrismaClient = this.prisma,
@@ -115,6 +121,15 @@ export class DoctorsTreeService {
     }
 
     return padArray(siblings, keyLength, 0n);
+  }
+
+  async getSiblings(
+    binaryKey: boolean[],
+    tx: PrismaClient = this.prisma,
+  ): Promise<bigint[]> {
+    const root = await this.getRoot(tx);
+    if (!root) throw new Error('Root node not found');
+    return this._getSiblings(root, binaryKey, tx);
   }
 
   async getLatest(tx: PrismaClient = this.prisma): Promise<
@@ -219,16 +234,13 @@ export class DoctorsTreeService {
   }
 
   private async insertNode(
+    root: DoctorNode,
     binaryKey: boolean[],
     doctorId: number,
     hash: bigint,
     tx: PrismaClient = this.prisma,
   ): Promise<DoctorNode> {
-    let currentNode = await this.getRoot(tx);
-    if (!currentNode) {
-      throw new Error('Root node not found');
-    }
-
+    let currentNode = root;
     for (let i = 0; i < binaryKey.length; i++) {
       if (currentNode.key) {
         // collision
