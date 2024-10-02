@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { ChildSide, Prescription } from '@prisma/client';
-import { poseidon1, poseidon2, poseidon3, poseidon9 } from 'poseidon-lite';
+import { poseidon2, poseidon3, poseidon9 } from 'poseidon-lite';
 import * as snarkjs from 'snarkjs';
 
 const keyLength = 4; // key length in bits
