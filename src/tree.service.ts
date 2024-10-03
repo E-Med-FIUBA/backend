@@ -2,7 +2,7 @@ import { ChildSide, PrismaClient } from '@prisma/client';
 import { poseidon2, poseidon3 } from 'poseidon-lite';
 import { PrismaService } from './prisma.service';
 
-const keyLength = 4; // key length in bits
+const keyLength = 4; // key length in bits - TODO: change this to a higher value. The number of available keys is 2^keyLength
 
 const padArray = <T>(
   arr: Array<T>,
@@ -84,8 +84,11 @@ export class TreeService {
     const hash = this.hash1(nodeData.id, hashedValue);
 
     const binaryKey = splitKey(nodeData.id);
-    const latestValue = await this.getOldNode(root, binaryKey, tx);
-    const siblings = await this._getSiblings(root, binaryKey, tx);
+    const { siblings, oldNode } = await this.getSiblingsAndOldNode(
+      root,
+      binaryKey,
+      tx,
+    );
 
     let currentNode = await this.insertNode(
       root,
@@ -94,7 +97,7 @@ export class TreeService {
       hash,
       tx,
     );
-    currentNode = await this.findNodeById(currentNode.parent_id);
+    currentNode = await this.getNode(currentNode.parent_id);
     const newRootHash = await this.updateHashes(currentNode, tx);
 
     return {
@@ -102,19 +105,22 @@ export class TreeService {
       oldRoot: BigInt(root.hash),
       newRoot: newRootHash,
       siblings: siblings,
-      oldKey: latestValue.key,
-      oldValue: this.hashData(latestValue[this.entityName]),
+      oldKey: oldNode.key,
+      oldValue: this.hashData(oldNode[this.entityName]),
       isOld0: 0,
       newKey: nodeData.id,
       newValue: hashedValue,
     };
   }
 
-  async _getSiblings(
+  private async getSiblingsAndOldNode(
     root: Node,
     binaryKey: boolean[],
     tx: PrismaTransactionalClient = this.prisma,
-  ): Promise<bigint[]> {
+  ): Promise<{
+    siblings: bigint[];
+    oldNode: Node;
+  }> {
     const siblings: bigint[] = [];
     let currentNode = root;
 
@@ -132,10 +138,17 @@ export class TreeService {
       if (!child) {
         break;
       }
+
       currentNode = child;
+      if (child.key) {
+        break;
+      }
     }
 
-    return padArray(siblings, keyLength, 0n);
+    return {
+      siblings: padArray(siblings, keyLength, 0n),
+      oldNode: await this.getNode(currentNode.id, tx, true),
+    };
   }
 
   async getSiblings(
@@ -145,33 +158,9 @@ export class TreeService {
     const root = await this.getRoot(tx);
     if (!root) throw new Error('Root node not found');
     const binaryKey = splitKey(key);
-    return this._getSiblings(root, binaryKey, tx);
-  }
-
-  // TODO: maybe this function can be merged with getSiblings so as not to run through the tree twice
-  private async getOldNode(
-    root: Node,
-    binaryKey: boolean[],
-    tx: PrismaTransactionalClient = this.prisma,
-  ): Promise<Node> {
-    let currentNode = root;
-    for (let i = 0; i < binaryKey.length; i++) {
-      const side = binaryKey[i] ? ChildSide.RIGHT : ChildSide.LEFT;
-
-      const child = await this.getChild(currentNode.id, side, tx, true);
-
-      if (!child) {
-        return currentNode; // check this case
-      }
-
-      if (child?.key) {
-        return child;
-      }
-
-      currentNode = child;
-    }
-
-    return currentNode;
+    return this.getSiblingsAndOldNode(root, binaryKey, tx).then(
+      ({ siblings }) => siblings,
+    );
   }
 
   async getRoot(
@@ -224,23 +213,12 @@ export class TreeService {
   ): Promise<bigint> {
     let currentHash = 0n;
     while (currentNode) {
-      const leftChild = await tx[this.nodeRepositoryName].findUnique({
-        where: {
-          unique_parent_side: {
-            parent_id: currentNode.id,
-            side: ChildSide.LEFT,
-          },
-        },
-      });
-
-      const rightChild = await tx[this.nodeRepositoryName].findUnique({
-        where: {
-          unique_parent_side: {
-            parent_id: currentNode.id,
-            side: ChildSide.RIGHT,
-          },
-        },
-      });
+      const leftChild = await this.getChild(currentNode.id, ChildSide.LEFT, tx);
+      const rightChild = await this.getChild(
+        currentNode.id,
+        ChildSide.RIGHT,
+        tx,
+      );
 
       const leftHash = leftChild ? BigInt(leftChild.hash) : 0n;
       const rightHash = rightChild ? BigInt(rightChild.hash) : 0n;
@@ -277,10 +255,10 @@ export class TreeService {
     tx: PrismaTransactionalClient = this.prisma,
   ): Promise<Node> {
     let currentNode = root;
+
     for (let i = 0; i < binaryKey.length; i++) {
       if (currentNode.key) {
-        // collision
-        // we need to split the node
+        // collision - we need to split the node
         const collisionKey = splitKey(currentNode.key);
         const newParent = await tx[this.nodeRepositoryName].update({
           where: {
@@ -305,14 +283,7 @@ export class TreeService {
 
       const bit = binaryKey[i];
       const side = bit ? ChildSide.RIGHT : ChildSide.LEFT;
-      const child = await tx[this.nodeRepositoryName].findUnique({
-        where: {
-          unique_parent_side: {
-            parent_id: currentNode.id,
-            side,
-          },
-        },
-      });
+      const child = await this.getChild(currentNode.id, side, tx);
 
       if (!child) {
         currentNode = await tx[this.nodeRepositoryName].create({
@@ -340,11 +311,15 @@ export class TreeService {
     return currentNode;
   }
 
-  protected findNodeById(
+  protected getNode(
     id: number,
     tx: PrismaTransactionalClient = this.prisma,
+    includeData: boolean = false,
   ): Promise<Node> {
-    return tx[this.nodeRepositoryName].findUnique({ where: { id } });
+    return tx[this.nodeRepositoryName].findUnique({
+      where: { id },
+      include: { [this.entityName]: includeData },
+    });
   }
 
   protected getChildren(
@@ -361,7 +336,7 @@ export class TreeService {
     side: ChildSide,
     tx: PrismaTransactionalClient = this.prisma,
     includeData: boolean = false,
-  ): Node | null {
+  ): Promise<Node | null> {
     return tx[this.nodeRepositoryName].findUnique({
       where: {
         unique_parent_side: {
