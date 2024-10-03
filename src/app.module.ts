@@ -9,7 +9,8 @@ import { PrescriptionsModule } from './models/prescriptions/prescriptions.module
 import { DrugsModule } from './models/drugs/drugs.module';
 import { UsersModule } from './models/users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { PrescriptionsTreeService } from './prescriptions-tree/prescriptions-tree.service';
+import { DoctorsTreeModule } from './doctors-tree/doctors-tree.module';
+import { PrescriptionsTreeModule } from './prescriptions-tree/prescriptions-tree.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,8 +23,10 @@ import { PrescriptionsTreeService } from './prescriptions-tree/prescriptions-tre
     PrescriptionsModule,
     UsersModule,
     AuthModule,
+    DoctorsTreeModule,
+    PrescriptionsTreeModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrescriptionsTreeService],
+  providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
