@@ -115,8 +115,6 @@ export class TreeService {
     binaryKey: boolean[],
     tx: PrismaTransactionalClient = this.prisma,
   ): Promise<bigint[]> {
-    console.log('key', binaryKey, root);
-
     const siblings: bigint[] = [];
     let currentNode = root;
 
