@@ -47,6 +47,7 @@ export class PrescriptionsService {
           prescription,
           tx,
         );
+
         const { proof }: { proof: Proof } = await snarkjs.groth16.fullProve(
           {
             ...proofData,

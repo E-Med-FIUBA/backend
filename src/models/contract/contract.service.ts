@@ -42,7 +42,7 @@ const parseProof = (proof: Proof): Proof => ({
 @Injectable()
 export class ContractService {
   async updateDoctorsMerkleRoot(newRoot: bigint, proof: Proof) {
-    const parsedNewRoot = '0x' + newRoot.toString(16);
+    const parsedNewRoot = toHex(newRoot);
     const parsedProof = parseProof(proof);
 
     const txDoctorCreate = await contract.updateDoctorsMerkleRoot(
@@ -56,7 +56,7 @@ export class ContractService {
   }
 
   async updatePrescriptionsMerkleRoot(newRoot: bigint, proof: Proof) {
-    const parsedNewRoot = '0x' + newRoot.toString(16);
+    const parsedNewRoot = toHex(newRoot);
     const parsedProof = parseProof(proof);
 
     const txPrescriptionCreate = await contract.updatePrescriptionsMerkleRoot(

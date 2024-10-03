@@ -97,7 +97,7 @@ export class TreeService {
       hash,
       tx,
     );
-    currentNode = await this.getNode(currentNode.parent_id);
+    currentNode = await this.getNode(currentNode.parent_id, tx);
     const newRootHash = await this.updateHashes(currentNode, tx);
 
     return {
@@ -211,7 +211,7 @@ export class TreeService {
     currentNode: Node,
     tx: PrismaTransactionalClient = this.prisma,
   ): Promise<bigint> {
-    let currentHash = 0n;
+    let currentHash = currentNode.hash;
     while (currentNode) {
       const leftChild = await this.getChild(currentNode.id, ChildSide.LEFT, tx);
       const rightChild = await this.getChild(
