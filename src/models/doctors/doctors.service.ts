@@ -24,8 +24,8 @@ export class DoctorsService {
 
       const { proof, publicSignals } = await snarkjs.groth16.fullProve(
         proofData,
-        'doctor_validation.wasm',
-        'doctor_circuit_final.zkey',
+        'validium/doctor_validation.wasm',
+        'validium/doctor_circuit_final.zkey',
       );
 
       return doctor;

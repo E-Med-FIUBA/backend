@@ -67,8 +67,8 @@ export class PrescriptionsService {
           doctorKey: data.doctorId,
           doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
         },
-        'prescription_validation.wasm',
-        'prescription_circuit_final.zkey',
+        'validium/prescription_validation.wasm',
+        'validium/prescription_circuit_final.zkey',
       );
 
       return prescription;
