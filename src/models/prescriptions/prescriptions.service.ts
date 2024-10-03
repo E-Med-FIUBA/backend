@@ -1,26 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PrescriptionDTO } from './dto/prescription.dto';
-import { ChildSide, Prescription } from '@prisma/client';
-import { poseidon2, poseidon3, poseidon9 } from 'poseidon-lite';
+import { Prescription } from '@prisma/client';
+import { poseidon3 } from 'poseidon-lite';
 import * as snarkjs from 'snarkjs';
 import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
 import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
-
-const keyLength = 4; // key length in bits
-
-const padArray = <T>(arr: Array<T>, length: number, paddingValue: T) => {
-  return arr.concat(Array(length - arr.length).fill(paddingValue));
-};
-
-const splitKey = (_key: number) => {
-  const key = _key
-    .toString(2)
-    .split('')
-    .map((x) => x === '1')
-    .reverse();
-  return padArray(key, keyLength, false);
-};
+import { ContractService, Proof } from '../contract/contract.service';
 
 @Injectable()
 export class PrescriptionsService {
@@ -28,51 +14,62 @@ export class PrescriptionsService {
     private prisma: PrismaService,
     private doctorsTreeService: DoctorsTreeService,
     private prescriptionsTreeService: PrescriptionsTreeService,
+    private contractService: ContractService,
   ) {}
 
   async create(data: Omit<Prescription, 'id'>) {
-    return this.prisma.$transaction(async (tx) => {
-      const doctorRoot = await this.doctorsTreeService.getRoot(tx);
-      if (!doctorRoot) {
-        throw new Error('Doctor tree not initialized');
-      }
+    return this.prisma.$transaction(
+      async (tx) => {
+        const doctorRoot = await this.doctorsTreeService.getRoot(tx);
+        if (!doctorRoot) {
+          throw new Error('Doctor tree not initialized');
+        }
 
-      const doctor = await tx.doctor.findUnique({
-        where: {
-          id: data.doctorId,
-        },
-      });
-      if (!doctor) {
-        throw new Error('Doctor not found');
-      }
+        const doctor = await tx.doctor.findUnique({
+          where: {
+            id: data.doctorId,
+          },
+        });
+        if (!doctor) {
+          throw new Error('Doctor not found');
+        }
 
-      const doctorSiblings = await this.doctorsTreeService.getSiblings(
-        data.doctorId,
-        tx,
-      );
+        const doctorSiblings = await this.doctorsTreeService.getSiblings(
+          data.doctorId,
+          tx,
+        );
 
-      const prescription = await tx.prescription.create({
-        data,
-      });
+        const prescription = await tx.prescription.create({
+          data,
+        });
 
-      const proofData = await this.prescriptionsTreeService.createNode(
-        prescription,
-        tx,
-      );
-      const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-        {
-          ...proofData,
-          doctorRoot: BigInt(doctorRoot.hash),
-          doctorSiblings: doctorSiblings,
-          doctorKey: data.doctorId,
-          doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
-        },
-        'validium/prescription_validation.wasm',
-        'validium/prescription_circuit_final.zkey',
-      );
+        const proofData = await this.prescriptionsTreeService.createNode(
+          prescription,
+          tx,
+        );
+        const { proof }: { proof: Proof } = await snarkjs.groth16.fullProve(
+          {
+            ...proofData,
+            doctorRoot: BigInt(doctorRoot.hash),
+            doctorSiblings: doctorSiblings,
+            doctorKey: data.doctorId,
+            doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
+          },
+          'validium/prescription_validation.wasm',
+          'validium/prescription_circuit_final.zkey',
+        );
 
-      return prescription;
-    });
+        await this.contractService.updatePrescriptionsMerkleRoot(
+          proofData.newRoot,
+          proof,
+        );
+
+        return prescription;
+      },
+      {
+        timeout: 60000,
+      },
+    );
   }
 
   findAll() {

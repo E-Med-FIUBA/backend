@@ -8,6 +8,8 @@ import { PrescriptionsTreeModule } from 'src/models/prescriptions-tree/prescript
 import { DoctorsTreeModule } from 'src/models/doctors-tree/doctors-tree.module';
 import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
 import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
+import { ContractModule } from '../contract/contract.module';
+import { ContractService } from '../contract/contract.service';
 
 @Module({
   imports: [
@@ -17,13 +19,15 @@ import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescrip
     UsersModule,
     DoctorsTreeModule,
     PrescriptionsTreeModule,
+    ContractModule,
   ],
   controllers: [PrescriptionsController],
   providers: [
     PrescriptionsService,
-    PrismaService,
+    ContractService,
     DoctorsTreeService,
     PrescriptionsTreeService,
+    PrismaService,
   ],
 })
 export class PrescriptionsModule {}

@@ -11,6 +11,8 @@ import { UsersModule } from './models/users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DoctorsTreeModule } from './models/doctors-tree/doctors-tree.module';
 import { PrescriptionsTreeModule } from './models/prescriptions-tree/prescriptions-tree.module';
+import { ContractModule } from './models/contract/contract.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,6 +27,7 @@ import { PrescriptionsTreeModule } from './models/prescriptions-tree/prescriptio
     AuthModule,
     DoctorsTreeModule,
     PrescriptionsTreeModule,
+    ContractModule,
   ],
   controllers: [AppController],
   providers: [AppService],
