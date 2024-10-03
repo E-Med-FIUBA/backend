@@ -4,8 +4,8 @@ import { PrescriptionDTO } from './dto/prescription.dto';
 import { ChildSide, Prescription } from '@prisma/client';
 import { poseidon2, poseidon3, poseidon9 } from 'poseidon-lite';
 import * as snarkjs from 'snarkjs';
-import { DoctorsTreeService } from 'src/doctors-tree/doctors-tree.service';
-import { PrescriptionsTreeService } from 'src/prescriptions-tree/prescriptions-tree.service';
+import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
+import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
 
 const keyLength = 4; // key length in bits
 

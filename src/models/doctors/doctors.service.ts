@@ -4,7 +4,7 @@ import { Doctor } from '@prisma/client';
 import { DoctorDTO } from './dto/doctor.dto';
 import { PatientsService } from '../patients/patients.service';
 import * as snarkjs from 'snarkjs';
-import { DoctorsTreeService } from 'src/doctors-tree/doctors-tree.service';
+import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
 
 @Injectable()
 export class DoctorsService {

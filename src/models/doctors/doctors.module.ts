@@ -5,8 +5,8 @@ import { DoctorsService } from './doctors.service';
 import { DoctorsController } from './doctors.controller';
 import { PatientsModule } from '../patients/patients.module';
 import { UsersModule } from '../users/users.module';
-import { DoctorsTreeService } from 'src/doctors-tree/doctors-tree.service';
-import { DoctorsTreeModule } from 'src/doctors-tree/doctors-tree.module';
+import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
+import { DoctorsTreeModule } from 'src/models/doctors-tree/doctors-tree.module';
 
 @Module({
   imports: [

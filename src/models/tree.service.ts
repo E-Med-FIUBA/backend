@@ -1,6 +1,6 @@
 import { ChildSide, PrismaClient } from '@prisma/client';
 import { poseidon2, poseidon3 } from 'poseidon-lite';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '../prisma.service';
 
 const keyLength = 4; // key length in bits - TODO: change this to a higher value. The number of available keys is 2^keyLength
 

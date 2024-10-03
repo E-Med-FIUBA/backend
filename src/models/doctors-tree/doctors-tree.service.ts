@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Doctor } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { poseidon3 } from 'poseidon-lite';
-import { TreeService } from 'src/tree.service';
+import { TreeService } from 'src/models/tree.service';
 
 @Injectable()
 export class DoctorsTreeService extends TreeService {

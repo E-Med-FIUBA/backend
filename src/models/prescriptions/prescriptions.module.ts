@@ -4,10 +4,10 @@ import { PrismaService } from '../../prisma.service';
 import { PrescriptionsController } from './prescriptions.controller';
 import { PrescriptionsService } from './prescriptions.service';
 import { UsersModule } from '../users/users.module';
-import { PrescriptionsTreeModule } from 'src/prescriptions-tree/prescriptions-tree.module';
-import { DoctorsTreeModule } from 'src/doctors-tree/doctors-tree.module';
-import { DoctorsTreeService } from 'src/doctors-tree/doctors-tree.service';
-import { PrescriptionsTreeService } from 'src/prescriptions-tree/prescriptions-tree.service';
+import { PrescriptionsTreeModule } from 'src/models/prescriptions-tree/prescriptions-tree.module';
+import { DoctorsTreeModule } from 'src/models/doctors-tree/doctors-tree.module';
+import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
+import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
 
 @Module({
   imports: [
