@@ -45,13 +45,25 @@ export class ContractService {
     const parsedNewRoot = toHex(newRoot);
     const parsedProof = parseProof(proof);
 
+    const estimatedGasLimit =
+      await contract.updateDoctorsMerkleRoot.estimateGas(
+        parsedNewRoot,
+        parsedProof.pi_a,
+        parsedProof.pi_b,
+        parsedProof.pi_c,
+      );
+
+    console.log('estimatedGasLimit', estimatedGasLimit);
+
     const txDoctorCreate = await contract.updateDoctorsMerkleRoot(
       parsedNewRoot,
       parsedProof.pi_a,
       parsedProof.pi_b,
       parsedProof.pi_c,
+      {
+        gasLimit: estimatedGasLimit,
+      },
     );
-
     return txDoctorCreate.wait();
   }
 
@@ -59,11 +71,24 @@ export class ContractService {
     const parsedNewRoot = toHex(newRoot);
     const parsedProof = parseProof(proof);
 
+    const estimatedGasLimit =
+      await contract.updatePrescriptionsMerkleRoot.estimateGas(
+        parsedNewRoot,
+        parsedProof.pi_a,
+        parsedProof.pi_b,
+        parsedProof.pi_c,
+      );
+
+    console.log('estimatedGasLimit', estimatedGasLimit);
+
     const txPrescriptionCreate = await contract.updatePrescriptionsMerkleRoot(
       parsedNewRoot,
       parsedProof.pi_a,
       parsedProof.pi_b,
       parsedProof.pi_c,
+      {
+        gasLimit: estimatedGasLimit,
+      },
     );
 
     return txPrescriptionCreate.wait();
