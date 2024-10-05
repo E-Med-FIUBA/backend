@@ -6,6 +6,7 @@ import { PatientsService } from '../patients/patients.service';
 import * as snarkjs from 'snarkjs';
 import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
 import { ContractService, Proof } from '../contract/contract.service';
+import { PrismaTransactionalClient } from 'utils/types';
 
 @Injectable()
 export class DoctorsService {
@@ -16,32 +17,28 @@ export class DoctorsService {
     private contractService: ContractService,
   ) {}
 
-  create(data: Omit<Doctor, 'id'>) {
-    return this.prisma.$transaction(
-      async (tx) => {
-        const doctor = await tx.doctor.create({
-          data,
-        });
+  async create(
+    data: Omit<Doctor, 'id'>,
+    tx: PrismaTransactionalClient = this.prisma,
+  ) {
+    const doctor = await tx.doctor.create({
+      data,
+    });
 
-        const proofData = await this.doctorsTreeService.createNode(doctor, tx);
+    const proofData = await this.doctorsTreeService.createNode(doctor, tx);
 
-        const { proof }: { proof: Proof } = await snarkjs.groth16.fullProve(
-          proofData,
-          'validium/doctor_validation.wasm',
-          'validium/doctor_circuit_final.zkey',
-        );
-
-        await this.contractService.updateDoctorsMerkleRoot(
-          proofData.newRoot,
-          proof,
-        );
-
-        return doctor;
-      },
-      {
-        timeout: 60000,
-      },
+    const { proof }: { proof: Proof } = await snarkjs.groth16.fullProve(
+      proofData,
+      'validium/doctor_validation.wasm',
+      'validium/doctor_circuit_final.zkey',
     );
+
+    await this.contractService.updateDoctorsMerkleRoot(
+      proofData.newRoot,
+      proof,
+    );
+
+    return doctor;
   }
 
   findAll(): Promise<Doctor[]> {

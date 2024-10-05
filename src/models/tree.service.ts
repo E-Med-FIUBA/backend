@@ -1,6 +1,7 @@
-import { ChildSide, PrismaClient } from '@prisma/client';
+import { ChildSide } from '@prisma/client';
 import { poseidon2, poseidon3 } from 'poseidon-lite';
 import { PrismaService } from '../prisma.service';
+import { PrismaTransactionalClient } from 'utils/types';
 
 const keyLength = 4; // key length in bits - TODO: change this to a higher value. The number of available keys is 2^keyLength
 
@@ -44,10 +45,6 @@ interface Node {
   parent_id: number | null;
   side: ChildSide | null;
 }
-
-export type PrismaTransactionalClient = Parameters<
-  Parameters<PrismaClient['$transaction']>[0]
->[0];
 
 export class TreeService {
   constructor(
