@@ -17,6 +17,18 @@ export class PrescriptionsService {
     return this.prisma.prescription.findMany();
   }
 
+  findAllByDoctor(doctorId: number) {
+    return this.prisma.prescription.findMany({
+      where: {
+        doctorId,
+      },
+      include: {
+        drug: true,
+        patient: true,
+      },
+    });
+  }
+
   findOne(id: number) {
     return this.prisma.prescription.findUnique({
       where: {
