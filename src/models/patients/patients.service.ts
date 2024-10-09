@@ -16,10 +16,25 @@ export class PatientsService {
     return this.prisma.patient.findMany();
   }
 
+  findAllByDoctor(doctorId: number) {
+    return this.prisma.patient.findMany({
+      where: {
+        doctorId,
+      },
+    });
+  }
+
   findOne(id: number) {
     return this.prisma.patient.findUnique({
       where: {
         id,
+      },
+      include: {
+        insurancePlan: {
+          include: {
+            insuranceCompany: true,
+          },
+        },
       },
     });
   }

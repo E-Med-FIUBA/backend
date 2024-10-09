@@ -6,12 +6,14 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { PatientDTO } from './dto/patient.dto';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
+import { Patient } from '@prisma/client';
 
 @ApiTags('patients')
 @Controller('patients')
@@ -25,8 +27,12 @@ export class PatientsController {
   }
 
   @Get()
-  findAll() {
-    return this.patientsService.findAll();
+  findAll(@Req() req): Promise<Patient[]> {
+    const doctorId = req.user?.doctor?.id;
+    if (!doctorId) {
+      throw new Error('Unauthorized');
+    }
+    return this.patientsService.findAllByDoctor(doctorId);
   }
 
   @Get(':id')

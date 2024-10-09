@@ -14,7 +14,7 @@ import { PrescriptionsTreeModule } from './models/prescriptions-tree/prescriptio
 import { ContractModule } from './models/contract/contract.module';
 import { UsersController } from './models/users/users.controller';
 import { SpecialtyModule } from './models/specialty/specialty.module';
-
+import { InsuranceModule } from './models/insurance/insurance.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -31,6 +31,7 @@ import { SpecialtyModule } from './models/specialty/specialty.module';
     PrescriptionsTreeModule,
     ContractModule,
     SpecialtyModule,
+    InsuranceModule,
   ],
   controllers: [AppController, UsersController],
   providers: [AppService],
