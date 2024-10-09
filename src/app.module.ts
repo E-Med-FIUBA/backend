@@ -12,6 +12,8 @@ import { AuthModule } from './auth/auth.module';
 import { DoctorsTreeModule } from './models/doctors-tree/doctors-tree.module';
 import { PrescriptionsTreeModule } from './models/prescriptions-tree/prescriptions-tree.module';
 import { ContractModule } from './models/contract/contract.module';
+import { UsersController } from './models/users/users.controller';
+import { SpecialtyModule } from './models/specialty/specialty.module';
 
 @Module({
   imports: [
@@ -28,8 +30,9 @@ import { ContractModule } from './models/contract/contract.module';
     DoctorsTreeModule,
     PrescriptionsTreeModule,
     ContractModule,
+    SpecialtyModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UsersController],
   providers: [AppService],
 })
 export class AppModule {}

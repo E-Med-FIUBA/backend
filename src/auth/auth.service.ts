@@ -128,7 +128,7 @@ export class AuthService {
             {
               userId: user.id,
               license: doctor.license,
-              specialty: doctor.specialty,
+              specialtyId: doctor.specialtyId,
             },
             tx,
           );

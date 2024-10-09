@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma.service';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { Prescription } from '@prisma/client';
 import { poseidon3 } from 'poseidon-lite';
-import * as snarkjs from 'snarkjs';
+import { groth16 } from 'snarkjs';
 import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
 import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
 import { ContractService, Proof } from '../contract/contract.service';
@@ -48,7 +48,7 @@ export class PrescriptionsService {
           tx,
         );
 
-        const { proof }: { proof: Proof } = await snarkjs.groth16.fullProve(
+        const { proof }: { proof: Proof } = await groth16.fullProve(
           {
             ...proofData,
             doctorRoot: BigInt(doctorRoot.hash),
@@ -75,6 +75,18 @@ export class PrescriptionsService {
 
   findAll() {
     return this.prisma.prescription.findMany();
+  }
+
+  findAllByDoctor(doctorId: number) {
+    return this.prisma.prescription.findMany({
+      where: {
+        doctorId,
+      },
+      include: {
+        drug: true,
+        patient: true,
+      },
+    });
   }
 
   findOne(id: number) {

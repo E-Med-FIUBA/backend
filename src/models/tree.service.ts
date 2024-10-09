@@ -32,6 +32,7 @@ interface ProofGenerationData {
   isOld0: number;
   newKey: number;
   newValue: bigint;
+  [key: string]: any;
 }
 
 interface NodeData {

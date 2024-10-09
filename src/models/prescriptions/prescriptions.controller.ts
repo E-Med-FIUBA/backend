@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { PrescriptionDTO } from './dto/prescription.dto';
@@ -22,8 +23,12 @@ export class PrescriptionsController {
   constructor(private prescriptionsService: PrescriptionsService) {}
 
   @Get()
-  findAll(): Promise<Prescription[]> {
-    return this.prescriptionsService.findAll();
+  findAll(@Req() req): Promise<Prescription[]> {
+    const doctorId = req.user?.doctor?.id;
+    if (!doctorId) {
+      throw new Error('Unauthorized');
+    }
+    return this.prescriptionsService.findAllByDoctor(doctorId);
   }
 
   @Get(':id')

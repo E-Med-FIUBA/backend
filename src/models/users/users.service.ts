@@ -1,6 +1,5 @@
 import { User } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
-import { UserDTO } from './dto/user.dto';
 import { Injectable } from '@nestjs/common';
 import { PrismaTransactionalClient } from 'utils/types';
 
@@ -51,6 +50,18 @@ export class UsersService {
     return this.prisma.user.findUnique({
       where: {
         uid,
+      },
+    });
+  }
+
+  findByUIDIncludeData(uid: string): Promise<User> {
+    return this.prisma.user.findUnique({
+      where: {
+        uid,
+      },
+      include: {
+        doctor: true,
+        pharmacist: true,
       },
     });
   }
