@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 
@@ -10,10 +10,5 @@ export class UsersController {
   @Get('me')
   me(@Req() req) {
     return req.user;
-  }
-
-  @Put('me')
-  updateMe(@Req() req) {
-    return this.usersService.update(req.user.id, req.body);
   }
 }

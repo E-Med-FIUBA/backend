@@ -9,7 +9,7 @@ async function bootstrap() {
 
   app.enableCors();
   app.use(morgan('tiny'));
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   const config = new DocumentBuilder()
     .setTitle('E-Med API')
@@ -22,4 +22,3 @@ async function bootstrap() {
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
-

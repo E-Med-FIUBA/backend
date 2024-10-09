@@ -5,12 +5,13 @@ import {
   Get,
   Param,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
-import { DoctorDTO } from './dto/doctor.dto';
 import { DoctorsService } from './doctors.service';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
+import { DoctorUpdateDTO } from './dto/doctor-update.dto';
 
 @ApiTags('doctors')
 @Controller('doctors')
@@ -22,9 +23,12 @@ export class DoctorsController {
     return this.doctorsService.findOne(id);
   }
 
-  @Put(':id')
-  update(@Param('id') id: number, @Body() data: DoctorDTO) {
-    return this.doctorsService.update(id, data);
+  @Put('me')
+  updateMe(@Req() req, @Body() data: DoctorUpdateDTO) {
+    const userId = req.user.id;
+    console.log(data);
+
+    return this.doctorsService.update(userId, data);
   }
 
   @Delete(':id')

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { Doctor } from '@prisma/client';
-import { DoctorDTO } from './dto/doctor.dto';
 import { PatientsService } from '../patients/patients.service';
+import { DoctorUpdateDTO } from './dto/doctor-update.dto';
 
 @Injectable()
 export class DoctorsService {
@@ -29,12 +29,28 @@ export class DoctorsService {
     });
   }
 
-  update(id: number, data: DoctorDTO): Promise<Doctor> {
+  update(id: number, data: DoctorUpdateDTO): Promise<Doctor> {
+    console.log(data);
+
     return this.prisma.doctor.update({
       where: {
         id,
       },
-      data,
+      data: {
+        user: {
+          update: {
+            email: data.email,
+            name: data.name,
+            lastName: data.lastName,
+            dni: data.dni,
+          },
+        },
+        specialty: {
+          connect: {
+            id: data.specialtyId,
+          },
+        },
+      },
     });
   }
 
