@@ -9,6 +9,7 @@ import { PrescriptionsModule } from './models/prescriptions/prescriptions.module
 import { DrugsModule } from './models/drugs/drugs.module';
 import { UsersModule } from './models/users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { UsersController } from './models/users/users.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,7 +23,7 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     AuthModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, UsersController],
   providers: [AppService],
 })
 export class AppModule { }
