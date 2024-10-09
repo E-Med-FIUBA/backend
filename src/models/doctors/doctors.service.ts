@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { Doctor } from '@prisma/client';
 import { PatientsService } from '../patients/patients.service';
+import { groth16 } from 'snarkjs';
+import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
+import { ContractService, Proof } from '../contract/contract.service';
+import { PrismaTransactionalClient } from 'utils/types';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
 
 @Injectable()
@@ -9,12 +13,32 @@ export class DoctorsService {
   constructor(
     private prisma: PrismaService,
     private patientsService: PatientsService,
+    private doctorsTreeService: DoctorsTreeService,
+    private contractService: ContractService,
   ) {}
 
-  create(data: Omit<Doctor, 'id'>) {
-    return this.prisma.doctor.create({
+  async create(
+    data: Omit<Doctor, 'id'>,
+    tx: PrismaTransactionalClient = this.prisma,
+  ) {
+    const doctor = await tx.doctor.create({
       data,
     });
+
+    const proofData = await this.doctorsTreeService.createNode(doctor, tx);
+
+    const { proof }: { proof: Proof } = await groth16.fullProve(
+      proofData,
+      'validium/doctor_validation.wasm',
+      'validium/doctor_circuit_final.zkey',
+    );
+
+    await this.contractService.updateDoctorsMerkleRoot(
+      proofData.newRoot,
+      proof,
+    );
+
+    return doctor;
   }
 
   findAll(): Promise<Doctor[]> {

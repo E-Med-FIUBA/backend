@@ -9,8 +9,12 @@ import { PrescriptionsModule } from './models/prescriptions/prescriptions.module
 import { DrugsModule } from './models/drugs/drugs.module';
 import { UsersModule } from './models/users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { DoctorsTreeModule } from './models/doctors-tree/doctors-tree.module';
+import { PrescriptionsTreeModule } from './models/prescriptions-tree/prescriptions-tree.module';
+import { ContractModule } from './models/contract/contract.module';
 import { UsersController } from './models/users/users.controller';
 import { SpecialtyModule } from './models/specialty/specialty.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -23,6 +27,9 @@ import { SpecialtyModule } from './models/specialty/specialty.module';
     PrescriptionsModule,
     UsersModule,
     AuthModule,
+    DoctorsTreeModule,
+    PrescriptionsTreeModule,
+    ContractModule,
     SpecialtyModule,
   ],
   controllers: [AppController, UsersController],

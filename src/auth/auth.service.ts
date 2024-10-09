@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   UserCredential,
+  deleteUser,
 } from 'firebase/auth';
 import { firebaseApp } from '../firebase/firebase';
 import {
@@ -21,6 +22,8 @@ import { PharmacistsService } from '../models/pharmacists/pharmacists.service';
 import { UserRegisterDTO } from '../models/users/dto/user-register.dto';
 import { DoctorRegisterDTO } from '../models/doctors/dto/doctor-register.dto';
 import { PharmacistRegisterDTO } from '../models/pharmacists/dto/pharmacist-register.dto';
+import { PrismaTransactionalClient } from 'utils/types';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +31,7 @@ export class AuthService {
     private readonly doctorsService: DoctorsService,
     private readonly usersService: UsersService,
     private readonly pharmacistsService: PharmacistsService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async logout(): Promise<void> {
@@ -73,6 +77,7 @@ export class AuthService {
 
   async createUser(
     user: UserRegisterDTO,
+    tx: PrismaTransactionalClient = this.prisma,
   ): Promise<{ credentials: UserCredential; user: User }> {
     const userData = {
       email: user.email,
@@ -82,30 +87,62 @@ export class AuthService {
       uid: null,
     };
 
-    const createdUser = await this.usersService.create(userData);
+    const createdUser = await this.usersService.create(userData, tx);
+    const credentials = await this.createFirebaseUser(user, createdUser.id, tx);
+
+    return { credentials, user: createdUser };
+  }
+
+  async createFirebaseUser(
+    user: UserRegisterDTO,
+    userId: number,
+    tx: PrismaTransactionalClient = this.prisma,
+  ): Promise<UserCredential> {
     const credentials = await createUserWithEmailAndPassword(
       getAuth(firebaseApp),
       user.email,
       user.password,
     );
 
-    await this.usersService.update(createdUser.id, {
-      uid: credentials.user.uid,
-    });
+    await this.usersService.update(
+      userId,
+      {
+        uid: credentials.user.uid,
+      },
+      tx,
+    );
 
-    return { credentials, user: createdUser };
+    return credentials;
   }
 
   async registerDoctor(doctor: DoctorRegisterDTO): Promise<Token> {
-    const { credentials: userCredentials, user } =
-      await this.createUser(doctor);
-    await this.doctorsService.create({
-      userId: user.id,
-      license: doctor.license,
-      specialtyId: doctor.specialtyId,
-    });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const { credentials: userCredentials, user } = await this.createUser(
+          doctor,
+          tx,
+        );
 
-    return { token: await userCredentials.user.getIdToken() };
+        try {
+          await this.doctorsService.create(
+            {
+              userId: user.id,
+              license: doctor.license,
+              specialtyId: doctor.specialtyId,
+            },
+            tx,
+          );
+        } catch (error) {
+          await deleteUser(userCredentials.user);
+          throw error;
+        }
+
+        return { token: await userCredentials.user.getIdToken() };
+      },
+      {
+        timeout: 60000,
+      },
+    );
   }
 
   async registerPharmacist(pharmacist: PharmacistRegisterDTO): Promise<Token> {

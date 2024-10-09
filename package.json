@@ -33,12 +33,15 @@
     "@prisma/client": "^5.14.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "ethers": "^6.13.3",
     "express": "^4.21.0",
     "firebase": "^10.12.3",
     "firebase-admin": "^12.2.0",
     "morgan": "^1.10.0",
+    "poseidon-lite": "^0.3.0",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "snarkjs": "^0.7.4"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -47,6 +50,7 @@
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
+    "@types/snarkjs": "^0.7.8",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
