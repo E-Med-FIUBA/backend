@@ -26,8 +26,6 @@ export class DoctorsController {
   @Put('me')
   updateMe(@Req() req, @Body() data: DoctorUpdateDTO) {
     const userId = req.user.id;
-    console.log(data);
-
     return this.doctorsService.update(userId, data);
   }
 

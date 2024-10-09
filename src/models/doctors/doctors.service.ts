@@ -30,8 +30,6 @@ export class DoctorsService {
   }
 
   update(id: number, data: DoctorUpdateDTO): Promise<Doctor> {
-    console.log(data);
-
     return this.prisma.doctor.update({
       where: {
         id,
