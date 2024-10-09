@@ -28,7 +28,7 @@ export class AuthService {
     private readonly doctorsService: DoctorsService,
     private readonly usersService: UsersService,
     private readonly pharmacistsService: PharmacistsService,
-  ) { }
+  ) {}
 
   async logout(): Promise<void> {
     const auth = getAuth(firebaseApp);
@@ -74,13 +74,12 @@ export class AuthService {
   async createUser(
     user: UserRegisterDTO,
   ): Promise<{ credentials: UserCredential; user: User }> {
-
     const userData = {
       email: user.email,
       name: user.name,
       lastName: user.lastName,
       dni: user.dni,
-      uid: null
+      uid: null,
     };
 
     const createdUser = await this.usersService.create(userData);
@@ -90,8 +89,9 @@ export class AuthService {
       user.password,
     );
 
-    await this.usersService.update(createdUser.id, { uid: credentials.user.uid });
-
+    await this.usersService.update(createdUser.id, {
+      uid: credentials.user.uid,
+    });
 
     return { credentials, user: createdUser };
   }
@@ -102,7 +102,7 @@ export class AuthService {
     await this.doctorsService.create({
       userId: user.id,
       license: doctor.license,
-      specialty: doctor.specialty,
+      specialtyId: doctor.specialtyId,
     });
 
     return { token: await userCredentials.user.getIdToken() };

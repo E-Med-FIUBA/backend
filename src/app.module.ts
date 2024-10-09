@@ -10,6 +10,7 @@ import { DrugsModule } from './models/drugs/drugs.module';
 import { UsersModule } from './models/users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersController } from './models/users/users.controller';
+import { SpecialtyModule } from './models/specialty/specialty.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -22,8 +23,9 @@ import { UsersController } from './models/users/users.controller';
     PrescriptionsModule,
     UsersModule,
     AuthModule,
+    SpecialtyModule,
   ],
   controllers: [AppController, UsersController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -55,7 +55,14 @@ model Doctor {
   patients      Patient[]
   user          User           @relation(fields: [userId], references: [id])
   userId        Int            @unique
-  specialty     String
+  specialtyId   Int
+  specialty     Specialty      @relation(fields: [specialtyId], references: [id])
+}
+
+model Specialty {
+  id     Int      @id @default(autoincrement())
+  name   String
+  Doctor Doctor[]
 }
 
 model Prescription {
