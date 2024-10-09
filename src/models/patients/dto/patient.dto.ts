@@ -1,10 +1,31 @@
-import { IsDate, IsNumber } from 'class-validator';
-import { UserDTO } from '../../users/dto/user.dto';
+import { Sex } from '@prisma/client';
+import { IsDate, IsEmail, IsEnum, IsNumber, IsString } from 'class-validator';
 
-export class PatientDTO extends UserDTO {
+export class PatientDTO {
   @IsNumber()
   doctorId: number;
 
   @IsDate()
   birthDate: Date;
+
+  @IsNumber()
+  insurancePlanId: number;
+
+  @IsNumber()
+  affiliateNumber: number;
+
+  @IsNumber()
+  dni: number;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  name: string;
+
+  @IsString()
+  lastName: string;
+
+  @IsEnum(Sex)
+  sex: Sex;
 }

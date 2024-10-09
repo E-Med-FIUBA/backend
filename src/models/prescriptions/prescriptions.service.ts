@@ -24,11 +24,7 @@ export class PrescriptionsService {
       },
       include: {
         drug: true,
-        patient: {
-          include: {
-            user: true,
-          },
-        },
+        patient: true,
       },
     });
   }

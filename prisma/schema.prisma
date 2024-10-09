@@ -27,19 +27,25 @@ model User {
   lastName   String
   email      String
   dni        Int
-  patient    Patient?
   doctor     Doctor?
   pharmacist Pharmacist?
 }
 
 model Patient {
-  id           Int            @id @default(autoincrement())
-  doctor       Doctor         @relation(fields: [doctorId], references: [id])
-  doctorId     Int
-  user         User           @relation(fields: [userId], references: [id])
-  userId       Int            @unique
-  birthDate    DateTime
-  prescription Prescription[]
+  id              Int            @id @default(autoincrement())
+  doctor          Doctor         @relation(fields: [doctorId], references: [id])
+  doctorId        Int
+  name            String
+  lastName        String
+  dni             Int
+  email           String
+  birthDate       DateTime
+  insurancePlanId Int
+  insurancePlan   InsurancePlan  @relation(fields: [insurancePlanId], references: [id])
+  sex             Sex
+  affiliateNumber Int
+  prescription    Prescription[]
+  PatientNotes    PatientNotes[]
 }
 
 model Doctor {
@@ -73,4 +79,33 @@ model Pharmacist {
   license String
   user    User   @relation(fields: [userId], references: [id])
   userId  Int    @unique
+}
+
+model InsuranceCompany {
+  id            Int             @id @default(autoincrement())
+  name          String
+  InsurancePlan InsurancePlan[]
+}
+
+model InsurancePlan {
+  id                 Int              @id @default(autoincrement())
+  insuranceCompany   InsuranceCompany @relation(fields: [insuranceCompanyId], references: [id])
+  insuranceCompanyId Int
+  name               String
+  Patient            Patient[]
+}
+
+model PatientNotes {
+  id        Int      @id @default(autoincrement())
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  patientId Int
+  note      String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
 }
