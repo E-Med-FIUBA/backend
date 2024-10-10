@@ -1,6 +1,6 @@
 import { User } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaTransactionalClient } from 'utils/types';
 
 @Injectable()
@@ -74,7 +74,7 @@ export class UsersService {
     });
 
     if (users.length > 1) {
-      throw new Error('Multiple users found with the same email');
+      throw new ConflictException('Multiple users found with the same email');
     }
 
     return users[0];

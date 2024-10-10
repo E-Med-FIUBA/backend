@@ -32,20 +32,20 @@ model User {
 }
 
 model Patient {
-  id              Int            @id @default(autoincrement())
-  doctor          Doctor         @relation(fields: [doctorId], references: [id])
-  doctorId        Int
-  name            String
-  lastName        String
-  dni             Int
-  email           String
-  birthDate       DateTime
-  insurancePlanId Int
-  insurancePlan   InsurancePlan  @relation(fields: [insurancePlanId], references: [id])
-  sex             Sex
-  affiliateNumber Int
-  prescription    Prescription[]
-  PatientNotes    PatientNotes[]
+  id                 Int              @id @default(autoincrement())
+  doctor             Doctor           @relation(fields: [doctorId], references: [id])
+  doctorId           Int
+  name               String
+  lastName           String
+  dni                Int
+  email              String
+  birthDate          DateTime
+  insuranceCompanyId Int
+  insuranceCompany   InsuranceCompany @relation(fields: [insuranceCompanyId], references: [id])
+  sex                Sex
+  affiliateNumber    Int
+  prescription       Prescription[]
+  PatientNotes       PatientNotes[]
 }
 
 model Doctor {
@@ -124,17 +124,9 @@ model DoctorNode {
 }
 
 model InsuranceCompany {
-  id            Int             @id @default(autoincrement())
-  name          String
-  InsurancePlan InsurancePlan[]
-}
-
-model InsurancePlan {
-  id                 Int              @id @default(autoincrement())
-  insuranceCompany   InsuranceCompany @relation(fields: [insuranceCompanyId], references: [id])
-  insuranceCompanyId Int
-  name               String
-  Patient            Patient[]
+  id      Int       @id @default(autoincrement())
+  name    String
+  Patient Patient[]
 }
 
 model PatientNotes {

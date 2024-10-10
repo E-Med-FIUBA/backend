@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Req,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { PatientsService } from './patients.service';
@@ -22,15 +23,22 @@ export class PatientsController {
   constructor(private patientsService: PatientsService) {}
 
   @Post()
-  create(@Body() data: PatientDTO) {
-    return this.patientsService.create(data);
+  create(@Req() req, @Body() data: PatientDTO) {
+    const doctorId = req.user?.doctor?.id;
+    if (!doctorId) {
+      throw new UnauthorizedException("You're not a doctor");
+    }
+    return this.patientsService.create({
+      ...data,
+      doctorId,
+    });
   }
 
   @Get()
   findAll(@Req() req): Promise<Patient[]> {
     const doctorId = req.user?.doctor?.id;
     if (!doctorId) {
-      throw new Error('Unauthorized');
+      throw new UnauthorizedException("You're not a doctor");
     }
     return this.patientsService.findAllByDoctor(doctorId);
   }
@@ -41,8 +49,15 @@ export class PatientsController {
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() data: PatientDTO) {
-    return this.patientsService.update(id, data);
+  update(@Req() req, @Param('id') id: number, @Body() data: PatientDTO) {
+    const doctorId = req.user?.doctor?.id;
+    if (!doctorId) {
+      throw new UnauthorizedException("You're not a doctor");
+    }
+    return this.patientsService.update(id, {
+      ...data,
+      doctorId,
+    });
   }
 
   @Delete(':id')

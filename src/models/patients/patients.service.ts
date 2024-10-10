@@ -21,6 +21,9 @@ export class PatientsService {
       where: {
         doctorId,
       },
+      orderBy: {
+        lastName: 'asc',
+      },
     });
   }
 
@@ -30,11 +33,7 @@ export class PatientsService {
         id,
       },
       include: {
-        insurancePlan: {
-          include: {
-            insuranceCompany: true,
-          },
-        },
+        insuranceCompany: true,
       },
     });
   }
@@ -62,7 +61,7 @@ export class PatientsService {
         doctorId: id,
       },
       include: {
-        insurancePlan: true,
+        insuranceCompany: true,
       },
     });
   }

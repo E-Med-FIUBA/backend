@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { Prescription } from '@prisma/client';
@@ -31,7 +31,7 @@ export class PrescriptionsService {
           },
         });
         if (!doctor) {
-          throw new Error('Doctor not found');
+          throw new NotFoundException('Doctor not found');
         }
 
         const doctorSiblings = await this.doctorsTreeService.getSiblings(

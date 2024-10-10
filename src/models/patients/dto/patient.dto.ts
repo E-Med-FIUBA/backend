@@ -1,15 +1,20 @@
 import { Sex } from '@prisma/client';
-import { IsDate, IsEmail, IsEnum, IsNumber, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 
 export class PatientDTO {
-  @IsNumber()
   doctorId: number;
 
-  @IsDate()
+  @IsDateString()
   birthDate: Date;
 
   @IsNumber()
-  insurancePlanId: number;
+  insuranceCompanyId: number;
 
   @IsNumber()
   affiliateNumber: number;

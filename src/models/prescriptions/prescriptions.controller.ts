@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Req,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { PrescriptionDTO } from './dto/prescription.dto';
@@ -26,7 +27,7 @@ export class PrescriptionsController {
   findAll(@Req() req): Promise<Prescription[]> {
     const doctorId = req.user?.doctor?.id;
     if (!doctorId) {
-      throw new Error('Unauthorized');
+      throw new UnauthorizedException('Unauthorized');
     }
     return this.prescriptionsService.findAllByDoctor(doctorId);
   }
