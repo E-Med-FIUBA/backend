@@ -15,6 +15,7 @@ import { ContractModule } from './models/contract/contract.module';
 import { UsersController } from './models/users/users.controller';
 import { SpecialtyModule } from './models/specialty/specialty.module';
 import { InsuranceModule } from './models/insurance/insurance.module';
+import { MailingModule } from './mailing/mailing.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,6 +33,7 @@ import { InsuranceModule } from './models/insurance/insurance.module';
     ContractModule,
     SpecialtyModule,
     InsuranceModule,
+    MailingModule,
   ],
   controllers: [AppController, UsersController],
   providers: [AppService],
