@@ -21,7 +21,7 @@ import { ApiTags } from '@nestjs/swagger';
 @Controller('prescriptions')
 @UseGuards(AuthGuard)
 export class PrescriptionsController {
-  constructor(private prescriptionsService: PrescriptionsService) {}
+  constructor(private prescriptionsService: PrescriptionsService) { }
 
   @Get()
   findAll(@Req() req): Promise<Prescription[]> {

@@ -15,11 +15,19 @@ export class PrescriptionsService {
     private doctorsTreeService: DoctorsTreeService,
     private prescriptionsTreeService: PrescriptionsTreeService,
     private contractService: ContractService,
-  ) {}
+  ) { }
 
   async create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
       async (tx) => {
+        const prescription = await tx.prescription.create({
+          data,
+        });
+
+        if (process.env.DISABLE_BLOCKCHAIN) {
+          return prescription;
+        }
+
         const doctorRoot = await this.doctorsTreeService.getRoot(tx);
         if (!doctorRoot) {
           throw new Error('Doctor tree not initialized');
@@ -39,9 +47,6 @@ export class PrescriptionsService {
           tx,
         );
 
-        const prescription = await tx.prescription.create({
-          data,
-        });
 
         const proofData = await this.prescriptionsTreeService.createNode(
           prescription,
@@ -64,6 +69,7 @@ export class PrescriptionsService {
           proofData.newRoot,
           proof,
         );
+
 
         return prescription;
       },

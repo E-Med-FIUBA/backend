@@ -15,7 +15,7 @@ export class DoctorsService {
     private patientsService: PatientsService,
     private doctorsTreeService: DoctorsTreeService,
     private contractService: ContractService,
-  ) {}
+  ) { }
 
   async create(
     data: Omit<Doctor, 'id'>,
@@ -24,6 +24,8 @@ export class DoctorsService {
     const doctor = await tx.doctor.create({
       data,
     });
+
+    if (process.env.DISABLE_BLOCKCHAIN) return doctor;
 
     const proofData = await this.doctorsTreeService.createNode(doctor, tx);
 
@@ -37,6 +39,7 @@ export class DoctorsService {
       proofData.newRoot,
       proof,
     );
+
 
     return doctor;
   }

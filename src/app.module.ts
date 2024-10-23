@@ -15,6 +15,7 @@ import { ContractModule } from './models/contract/contract.module';
 import { UsersController } from './models/users/users.controller';
 import { SpecialtyModule } from './models/specialty/specialty.module';
 import { InsuranceModule } from './models/insurance/insurance.module';
+import { SignatureModule } from './models/signature/signature.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,8 +33,9 @@ import { InsuranceModule } from './models/insurance/insurance.module';
     ContractModule,
     SpecialtyModule,
     InsuranceModule,
+    SignatureModule
   ],
   controllers: [AppController, UsersController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
