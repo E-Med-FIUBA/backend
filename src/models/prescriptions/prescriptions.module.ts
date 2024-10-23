@@ -29,5 +29,6 @@ import { ContractService } from '../contract/contract.service';
     PrescriptionsTreeService,
     PrismaService,
   ],
+  exports: [PrescriptionsService]
 })
-export class PrescriptionsModule {}
+export class PrescriptionsModule { }

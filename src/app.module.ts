@@ -35,7 +35,7 @@ import { SignatureModule } from './models/signature/signature.module';
     InsuranceModule,
     SignatureModule
   ],
-  controllers: [AppController, UsersController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }

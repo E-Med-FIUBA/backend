@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { UsersModule } from '../users/users.module';
 import { SignatureController } from './signature.controller';
 import { SignatureService } from './signature.service';
 import { DoctorsModule } from '../doctors/doctors.module';

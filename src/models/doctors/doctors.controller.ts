@@ -45,8 +45,10 @@ export class DoctorsController {
   public async getCertificate(@Req() req: Request & { user: User }): Promise<{ certificate: string }> {
     const user = req.user;
 
-    const doctor = await this.doctorsService.findByUserId(user.id);
+    // const doctor = await this.doctorsService.findByUserId(user.id);
 
-    return doctor.certificate;
+    // return doctor.certificate;
+
+    return null
   }
 }
