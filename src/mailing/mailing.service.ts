@@ -7,11 +7,17 @@ import { compile } from 'handlebars';
 import { readFileSync } from 'fs';
 
 import { toBuffer } from 'qrcode';
-import { Doctor, Patient, Prescription } from '@prisma/client';
+import { Doctor, Patient, Prescription, Sex } from '@prisma/client';
 
 const logger = new Logger();
 
 const TEMPLATE_DIR = 'templates/';
+
+const sexMap = {
+  [Sex.FEMALE]: 'Femenino',
+  [Sex.MALE]: 'Masculino',
+  [Sex.OTHER]: 'Otro',
+};
 
 @Injectable()
 export class MailingService {
@@ -77,15 +83,24 @@ export class MailingService {
             cid: 'qrcode',
           });
 
+          console.log(patient, doctor, prescription);
+
           this.transporter.sendMail({
             from: process.env.MAIL_USER,
             to,
             subject: 'Prescription', // TODO: Change this
             html: this.prescriptionTemplate({
               // TODO: Check these have the template variables
-              patient,
+              patient: {
+                ...patient,
+                birthDate: patient.birthDate.toISOString().split('T')[0],
+                sex: sexMap[patient.sex],
+              },
               doctor,
-              prescription,
+              prescription: {
+                ...prescription,
+                emitedAt: prescription.emitedAt.toISOString().split('T')[0],
+              },
               qrCode: 'cid:qrcode',
             }),
             attachments,

@@ -81,9 +81,11 @@
   </head>
   <body>
     <div class="container">
+      {{#with prescription}}
       <div class="date">
-        <span>16/10/2024</span>
+        <span>{{emitedAt}}</span>
       </div>
+      {{/with}}
 
       <div class="qr-code-header">
         <img
@@ -100,7 +102,9 @@
         <div class="section">
           <h3>Paciente</h3>
           <p><strong>Nombre:</strong> {{name}} {{lastName}}</p>
-          <p><strong>Obra Social/Prepaga:</strong> {{insuranceCompany}}</p>
+          {{#with insuranceCompany}}
+            <p><strong>Obra Social/Prepaga:</strong> {{name}}</p>
+          {{/with}}
           <p><strong>Fecha de Nacimiento:</strong> {{birthDate}}</p>
           <p><strong>DNI:</strong> {{dni}}</p>
           <p><strong>Sexo:</strong> {{sex}}</p>
@@ -111,9 +115,13 @@
         {{#with doctor}}
         <div class="section">
           <h3>Profesional de la Salud</h3>
-          <p><strong>Nombre:</strong> Dr. {{name}} {{lastName}}</p>
+          {{#with user}}
+            <p><strong>Nombre:</strong> Dr. {{name}} {{lastName}}</p>
+          {{/with}}
           <p><strong>Matrícula:</strong> {{license}}</p>
-          <p><strong>Especialidad:</strong> {{specialty}}</p>
+          {{#with specialty}}
+            <p><strong>Especialidad:</strong> {{name}}</p>
+          {{/with}}
         </div>
         {{/with}}
       </div>
@@ -122,16 +130,20 @@
         {{#with prescription}}
         <div class="section">
           <h3>Medicamento</h3>
-          <p><strong>Nombre Genérico:</strong> {{genericName}}</p>
-          <p><strong>Presentación:</strong> {{presentation}}</p>
-          <p><strong>Forma Farmacéutica:</strong> {{pharmaceuticForm}}</p>
-          <p><strong>Cantidad de Unidades:</strong> {{units}}</p>
+          {{#with presentation}}
+            {{#with drug}}
+              <p><strong>Nombre Genérico:</strong> {{name}}</p>
+            {{/with}}
+            <p><strong>Presentación:</strong> {{name}}</p>
+            <p><strong>Forma Farmacéutica:</strong> {{pharmaceuticForm}}</p>
+          {{/with}}
+          <p><strong>Cantidad de Unidades:</strong> {{quantity}}</p>
         </div>
 
         <!-- Diagnóstico -->
         <div class="section">
           <h3>Diagnóstico</h3>
-          <p>{{diagnose}}</p>
+          <p>{{indication}}</p>
         </div>
         {{/with}}
       </div>

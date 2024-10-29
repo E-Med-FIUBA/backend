@@ -40,7 +40,32 @@ export class PrescriptionsService {
         );
 
         const prescription = await tx.prescription.create({
-          data,
+          data: {
+            emitedAt: data.emitedAt,
+            quantity: data.quantity,
+            presentationId: data.presentationId,
+            indication: data.indication,
+            doctorId: data.doctorId,
+            patientId: data.patientId,
+          },
+          include: {
+            presentation: {
+              include: {
+                drug: true,
+              },
+            },
+            patient: {
+              include: {
+                insuranceCompany: true,
+              },
+            },
+            doctor: {
+              include: {
+                user: true,
+                specialty: true,
+              },
+            },
+          },
         });
 
         const proofData = await this.prescriptionsTreeService.createNode(
@@ -83,7 +108,11 @@ export class PrescriptionsService {
         doctorId,
       },
       include: {
-        drug: true,
+        presentation: {
+          include: {
+            drug: true,
+          },
+        },
         patient: true,
       },
     });
