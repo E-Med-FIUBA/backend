@@ -8,4 +8,12 @@ export class InsuranceService {
   findAll() {
     return this.prisma.insuranceCompany.findMany();
   }
+
+  findOne(id: number) {
+    return this.prisma.insuranceCompany.findUnique({
+      where: {
+        id,
+      },
+    });
+  }
 }

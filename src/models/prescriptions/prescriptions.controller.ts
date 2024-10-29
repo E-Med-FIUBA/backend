@@ -17,6 +17,8 @@ import { PrescriptionDTO } from './dto/prescription.dto';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { MailingService } from 'src/mailing/mailing.service';
+import { PatientlessPrescriptionDTO } from './dto/patientless-prescription.dto';
+import { InsuranceService } from '../insurance/insurance.service';
 
 @ApiTags('prescriptions')
 @Controller('prescriptions')
@@ -24,6 +26,7 @@ import { MailingService } from 'src/mailing/mailing.service';
 export class PrescriptionsController {
   constructor(
     private prescriptionsService: PrescriptionsService,
+    private insuranceService: InsuranceService,
     private mailingService: MailingService,
   ) {}
 
@@ -62,6 +65,37 @@ export class PrescriptionsController {
       prescription.patient,
       prescription.doctor,
       prescription,
+    );
+    return prescription;
+  }
+
+  @Post('patientless')
+  async createPatientless(
+    @Body() prescriptionDTO: PatientlessPrescriptionDTO,
+    @Req() req,
+  ): Promise<Prescription> {
+    const doctorId = req.user?.doctor?.id;
+    if (!doctorId) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    const prescription = await this.prescriptionsService.create({
+      ...prescriptionDTO,
+      patientId: null,
+      emitedAt: new Date(),
+      doctorId,
+    });
+
+    const insuranceCompany = await this.insuranceService.findOne(
+      prescriptionDTO.insuranceCompanyId,
+    );
+
+    this.mailingService.sendPatientlessPrescription(
+      prescriptionDTO,
+      insuranceCompany,
+      req.user,
+      prescription,
+      prescription.presentation,
     );
     return prescription;
   }
