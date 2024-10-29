@@ -20,24 +20,24 @@ export class PrescriptionsService {
   async create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
       async (tx) => {
-        // const doctorRoot = await this.doctorsTreeService.getRoot(tx);
-        // if (!doctorRoot) {
-        //   throw new Error('Doctor tree not initialized');
-        // }
+        const doctorRoot = await this.doctorsTreeService.getRoot(tx);
+        if (!doctorRoot) {
+          throw new Error('Doctor tree not initialized');
+        }
 
-        // const doctor = await tx.doctor.findUnique({
-        //   where: {
-        //     id: data.doctorId,
-        //   },
-        // });
-        // if (!doctor) {
-        //   throw new NotFoundException('Doctor not found');
-        // }
+        const doctor = await tx.doctor.findUnique({
+          where: {
+            id: data.doctorId,
+          },
+        });
+        if (!doctor) {
+          throw new NotFoundException('Doctor not found');
+        }
 
-        // const doctorSiblings = await this.doctorsTreeService.getSiblings(
-        //   data.doctorId,
-        //   tx,
-        // );
+        const doctorSiblings = await this.doctorsTreeService.getSiblings(
+          data.doctorId,
+          tx,
+        );
 
         const prescription = await tx.prescription.create({
           data: {
@@ -68,27 +68,27 @@ export class PrescriptionsService {
           },
         });
 
-        // const proofData = await this.prescriptionsTreeService.createNode(
-        //   prescription,
-        //   tx,
-        // );
+        const proofData = await this.prescriptionsTreeService.createNode(
+          prescription,
+          tx,
+        );
 
-        // const { proof }: { proof: Proof } = await groth16.fullProve(
-        //   {
-        //     ...proofData,
-        //     doctorRoot: BigInt(doctorRoot.hash),
-        //     doctorSiblings: doctorSiblings,
-        //     doctorKey: data.doctorId,
-        //     doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
-        //   },
-        //   'validium/prescription_validation.wasm',
-        //   'validium/prescription_circuit_final.zkey',
-        // );
+        const { proof }: { proof: Proof } = await groth16.fullProve(
+          {
+            ...proofData,
+            doctorRoot: BigInt(doctorRoot.hash),
+            doctorSiblings: doctorSiblings,
+            doctorKey: data.doctorId,
+            doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
+          },
+          'validium/prescription_validation.wasm',
+          'validium/prescription_circuit_final.zkey',
+        );
 
-        // await this.contractService.updatePrescriptionsMerkleRoot(
-        //   proofData.newRoot,
-        //   proof,
-        // );
+        await this.contractService.updatePrescriptionsMerkleRoot(
+          proofData.newRoot,
+          proof,
+        );
 
         return prescription;
       },
