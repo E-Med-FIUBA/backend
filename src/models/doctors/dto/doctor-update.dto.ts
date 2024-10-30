@@ -21,4 +21,7 @@ export class DoctorUpdateDTO {
   @Type(() => Number)
   @IsNumber()
   specialtyId?: number;
+
+  @IsOptional()
+  certificate: string;
 }

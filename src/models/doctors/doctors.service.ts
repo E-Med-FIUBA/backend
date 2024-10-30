@@ -22,7 +22,21 @@ export class DoctorsService {
     tx: PrismaTransactionalClient = this.prisma,
   ) {
     const doctor = await tx.doctor.create({
-      data,
+      data: {
+        license: data.license,
+        certificateRequest: data.certificateRequest,
+        privateKey: data.privateKey,
+        user: {
+          connect: {
+            id: data.userId
+          }
+        },
+        specialty: {
+          connect: {
+            id: data.specialtyId
+          }
+        }
+      },
     });
 
     if (process.env.DISABLE_BLOCKCHAIN) return doctor;
@@ -62,6 +76,7 @@ export class DoctorsService {
         id,
       },
       data: {
+        certificate: data.certificate,
         user: {
           update: {
             email: data.email,

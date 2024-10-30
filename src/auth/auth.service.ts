@@ -130,7 +130,8 @@ export class AuthService {
               license: doctor.license,
               specialtyId: doctor.specialtyId,
               certificateRequest: doctor.certificateRequest,
-              certificate: null
+              certificate: null,
+              privateKey: null
             },
             tx,
           );
