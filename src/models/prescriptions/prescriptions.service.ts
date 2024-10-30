@@ -28,6 +28,7 @@ export class PrescriptionsService {
             indication: data.indication,
             doctorId: data.doctorId,
             patientId: data.patientId,
+            signature: data.signature,
           },
           include: {
             presentation: {

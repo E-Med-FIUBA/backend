@@ -48,4 +48,8 @@ export class PatientlessPrescriptionDTO {
   @IsString()
   @IsNotEmpty()
   indication: string;
+
+  @IsString()
+  @IsNotEmpty()
+  signature: string;
 }
