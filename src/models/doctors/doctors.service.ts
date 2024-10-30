@@ -15,7 +15,7 @@ export class DoctorsService {
     private patientsService: PatientsService,
     private doctorsTreeService: DoctorsTreeService,
     private contractService: ContractService,
-  ) { }
+  ) {}
 
   async create(
     data: Omit<Doctor, 'id'>,
@@ -39,7 +39,6 @@ export class DoctorsService {
       proofData.newRoot,
       proof,
     );
-
 
     return doctor;
   }
