@@ -11,8 +11,6 @@ import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescrip
 import { ContractModule } from '../contract/contract.module';
 import { ContractService } from '../contract/contract.service';
 import { MailingModule } from 'src/mailing/mailing.module';
-import { InsuranceModule } from '../insurance/insurance.module';
-import { InsuranceService } from '../insurance/insurance.service';
 import { PatientsModule } from '../patients/patients.module';
 import { PatientsService } from '../patients/patients.service';
 
@@ -25,7 +23,6 @@ import { PatientsService } from '../patients/patients.service';
     DoctorsTreeModule,
     PrescriptionsTreeModule,
     ContractModule,
-    InsuranceModule,
     PatientsModule,
     MailingModule,
   ],
@@ -35,9 +32,9 @@ import { PatientsService } from '../patients/patients.service';
     ContractService,
     DoctorsTreeService,
     PrescriptionsTreeService,
-    InsuranceService,
     PatientsService,
     PrismaService,
   ],
+  exports: [PrescriptionsService],
 })
 export class PrescriptionsModule {}

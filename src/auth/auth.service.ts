@@ -32,7 +32,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly pharmacistsService: PharmacistsService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async logout(): Promise<void> {
     const auth = getAuth(firebaseApp);
@@ -129,6 +129,8 @@ export class AuthService {
               userId: user.id,
               license: doctor.license,
               specialtyId: doctor.specialtyId,
+              certificateRequest: doctor.certificateRequest,
+              certificate: null
             },
             tx,
           );

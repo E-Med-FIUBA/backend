@@ -16,4 +16,8 @@ export class PrescriptionDTO {
   @IsString()
   @IsNotEmpty()
   indication: string;
+
+  @IsString()
+  @IsNotEmpty()
+  signature: string;
 }

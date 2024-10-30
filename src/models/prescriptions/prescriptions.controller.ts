@@ -18,7 +18,6 @@ import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { MailingService } from 'src/mailing/mailing.service';
 import { PatientlessPrescriptionDTO } from './dto/patientless-prescription.dto';
-import { InsuranceService } from '../insurance/insurance.service';
 import { PatientsService } from '../patients/patients.service';
 
 @ApiTags('prescriptions')
@@ -27,7 +26,6 @@ import { PatientsService } from '../patients/patients.service';
 export class PrescriptionsController {
   constructor(
     private prescriptionsService: PrescriptionsService,
-    private insuranceService: InsuranceService,
     private patientsService: PatientsService,
     private mailingService: MailingService,
   ) {}

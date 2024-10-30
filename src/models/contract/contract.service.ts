@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 
-import * as ContractArtifact from 'contracts/Test.sol/Test.json';
+import * as ContractArtifact from 'contracts/RootManager.sol/RootManager.json';
 const PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY || '';
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '';
 

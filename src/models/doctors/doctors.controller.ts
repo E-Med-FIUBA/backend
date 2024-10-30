@@ -12,12 +12,13 @@ import { DoctorsService } from './doctors.service';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
+import { User } from '@prisma/client';
 
 @ApiTags('doctors')
 @Controller('doctors')
 @UseGuards(AuthGuard)
 export class DoctorsController {
-  constructor(private doctorsService: DoctorsService) {}
+  constructor(private doctorsService: DoctorsService) { }
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.doctorsService.findOne(id);
@@ -37,5 +38,17 @@ export class DoctorsController {
   @Get(':id/patients')
   public getDoctorsPatients(@Param('id') id: number) {
     return this.doctorsService.getDoctorsPatients(id);
+  }
+
+
+  @Get('certificate')
+  public async getCertificate(@Req() req: Request & { user: User }): Promise<{ certificate: string }> {
+    const user = req.user;
+
+    // const doctor = await this.doctorsService.findByUserId(user.id);
+
+    // return doctor.certificate;
+
+    return null
   }
 }
