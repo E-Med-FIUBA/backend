@@ -12,9 +12,9 @@ import { AuthModule } from './auth/auth.module';
 import { DoctorsTreeModule } from './models/doctors-tree/doctors-tree.module';
 import { PrescriptionsTreeModule } from './models/prescriptions-tree/prescriptions-tree.module';
 import { ContractModule } from './models/contract/contract.module';
-import { UsersController } from './models/users/users.controller';
 import { SpecialtyModule } from './models/specialty/specialty.module';
 import { InsuranceModule } from './models/insurance/insurance.module';
+import { MailingModule } from './mailing/mailing.module';
 import { SignatureModule } from './models/signature/signature.module';
 @Module({
   imports: [
@@ -33,9 +33,10 @@ import { SignatureModule } from './models/signature/signature.module';
     ContractModule,
     SpecialtyModule,
     InsuranceModule,
-    SignatureModule
+    MailingModule,
+    SignatureModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

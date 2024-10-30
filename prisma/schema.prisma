@@ -14,10 +14,18 @@ datasource db {
 }
 
 model Drug {
-  id           Int            @id @default(autoincrement())
-  name         String
-  description  String
-  prescription Prescription[]
+  id            Int            @id @default(autoincrement())
+  name          String
+  description   String
+  presentations Presentation[]
+}
+
+model Presentation {
+  id            Int            @id @default(autoincrement())
+  name          String
+  drugId        Int
+  drug          Drug           @relation(fields: [drugId], references: [id])
+  prescriptions Prescription[]
 }
 
 model User {
@@ -33,8 +41,8 @@ model User {
 
 model Patient {
   id                 Int              @id @default(autoincrement())
-  doctor             Doctor           @relation(fields: [doctorId], references: [id])
-  doctorId           Int
+  doctor             Doctor?          @relation(fields: [doctorId], references: [id])
+  doctorId           Int?
   name               String
   lastName           String
   dni                Int
@@ -44,8 +52,8 @@ model Patient {
   insuranceCompany   InsuranceCompany @relation(fields: [insuranceCompanyId], references: [id])
   sex                Sex
   affiliateNumber    Int
-  prescription       Prescription[]
-  PatientNotes       PatientNotes[]
+  prescriptions      Prescription[]
+  patientNotes       PatientNotes[]
 }
 
 model Doctor {
@@ -57,7 +65,7 @@ model Doctor {
   specialty          Specialty      @relation(fields: [specialtyId], references: [id])
   prescriptions      Prescription[]
   patients           Patient[]
-  DoctorNode         DoctorNode[]
+  doctorNodes        DoctorNode[]
   certificateRequest String
   certificate        String
 }
@@ -65,25 +73,22 @@ model Doctor {
 model Specialty {
   id     Int      @id @default(autoincrement())
   name   String
-  Doctor Doctor[]
+  doctor Doctor[]
 }
 
 model Prescription {
-  id               Int                @id @default(autoincrement())
-  duration         Int
-  frequency        Int
-  drug             Drug               @relation(fields: [drugId], references: [id])
-  drugId           Int
-  indication       String
-  patient          Patient            @relation(fields: [patientId], references: [id])
-  patientId        Int
-  Doctor           Doctor?            @relation(fields: [doctorId], references: [id])
-  doctorId         Int?
-  quantity         Int
-  startDate        DateTime
-  endDate          DateTime
-  signature        String
-  PrescriptionNode PrescriptionNode[]
+  id                Int                @id @default(autoincrement())
+  presentationId    Int
+  presentation      Presentation       @relation(fields: [presentationId], references: [id])
+  indication        String
+  patient           Patient            @relation(fields: [patientId], references: [id])
+  patientId         Int
+  doctor            Doctor?            @relation(fields: [doctorId], references: [id])
+  doctorId          Int?
+  quantity          Int
+  emitedAt          DateTime
+  prescriptionNodes PrescriptionNode[]
+  signature         String
 }
 
 model Pharmacist {
@@ -129,7 +134,7 @@ model DoctorNode {
 model InsuranceCompany {
   id      Int       @id @default(autoincrement())
   name    String
-  Patient Patient[]
+  patient Patient[]
 }
 
 model PatientNotes {

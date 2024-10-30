@@ -15,13 +15,39 @@ export class PrescriptionsService {
     private doctorsTreeService: DoctorsTreeService,
     private prescriptionsTreeService: PrescriptionsTreeService,
     private contractService: ContractService,
-  ) { }
+  ) {}
 
   async create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
       async (tx) => {
         const prescription = await tx.prescription.create({
-          data,
+          data: {
+            emitedAt: data.emitedAt,
+            quantity: data.quantity,
+            presentationId: data.presentationId,
+            indication: data.indication,
+            doctorId: data.doctorId,
+            patientId: data.patientId,
+            signature: data.signature,
+          },
+          include: {
+            presentation: {
+              include: {
+                drug: true,
+              },
+            },
+            patient: {
+              include: {
+                insuranceCompany: true,
+              },
+            },
+            doctor: {
+              include: {
+                user: true,
+                specialty: true,
+              },
+            },
+          },
         });
 
         if (process.env.DISABLE_BLOCKCHAIN) {
@@ -47,7 +73,6 @@ export class PrescriptionsService {
           tx,
         );
 
-
         const proofData = await this.prescriptionsTreeService.createNode(
           prescription,
           tx,
@@ -70,7 +95,6 @@ export class PrescriptionsService {
           proof,
         );
 
-
         return prescription;
       },
       {
@@ -89,7 +113,11 @@ export class PrescriptionsService {
         doctorId,
       },
       include: {
-        drug: true,
+        presentation: {
+          include: {
+            drug: true,
+          },
+        },
         patient: true,
       },
     });
