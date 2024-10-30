@@ -83,8 +83,8 @@ model Prescription {
   indication        String
   patient           Patient            @relation(fields: [patientId], references: [id])
   patientId         Int
-  doctor            Doctor?            @relation(fields: [doctorId], references: [id])
-  doctorId          Int?
+  doctor            Doctor             @relation(fields: [doctorId], references: [id])
+  doctorId          Int
   quantity          Int
   emitedAt          DateTime
   prescriptionNodes PrescriptionNode[]
