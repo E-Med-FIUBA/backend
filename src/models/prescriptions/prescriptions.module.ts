@@ -13,6 +13,8 @@ import { ContractService } from '../contract/contract.service';
 import { MailingModule } from 'src/mailing/mailing.module';
 import { InsuranceModule } from '../insurance/insurance.module';
 import { InsuranceService } from '../insurance/insurance.service';
+import { PatientsModule } from '../patients/patients.module';
+import { PatientsService } from '../patients/patients.service';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { InsuranceService } from '../insurance/insurance.service';
     PrescriptionsTreeModule,
     ContractModule,
     InsuranceModule,
+    PatientsModule,
     MailingModule,
   ],
   controllers: [PrescriptionsController],
@@ -33,6 +36,7 @@ import { InsuranceService } from '../insurance/insurance.service';
     DoctorsTreeService,
     PrescriptionsTreeService,
     InsuranceService,
+    PatientsService,
     PrismaService,
   ],
 })

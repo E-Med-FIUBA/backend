@@ -19,6 +19,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { MailingService } from 'src/mailing/mailing.service';
 import { PatientlessPrescriptionDTO } from './dto/patientless-prescription.dto';
 import { InsuranceService } from '../insurance/insurance.service';
+import { PatientsService } from '../patients/patients.service';
 
 @ApiTags('prescriptions')
 @Controller('prescriptions')
@@ -27,6 +28,7 @@ export class PrescriptionsController {
   constructor(
     private prescriptionsService: PrescriptionsService,
     private insuranceService: InsuranceService,
+    private patientsService: PatientsService,
     private mailingService: MailingService,
   ) {}
 
@@ -79,23 +81,30 @@ export class PrescriptionsController {
       throw new UnauthorizedException('Unauthorized');
     }
 
+    const patient = await this.patientsService.create({
+      name: prescriptionDTO.name,
+      lastName: prescriptionDTO.lastName,
+      email: prescriptionDTO.email,
+      insuranceCompanyId: prescriptionDTO.insuranceCompanyId,
+      birthDate: prescriptionDTO.birthDate,
+      dni: prescriptionDTO.dni,
+      affiliateNumber: prescriptionDTO.affiliateNumber,
+      sex: prescriptionDTO.sex,
+      doctorId: null,
+    });
+
     const prescription = await this.prescriptionsService.create({
       ...prescriptionDTO,
-      patientId: null,
+      patientId: patient.id,
       emitedAt: new Date(),
       doctorId,
     });
 
-    const insuranceCompany = await this.insuranceService.findOne(
-      prescriptionDTO.insuranceCompanyId,
-    );
-
-    this.mailingService.sendPatientlessPrescription(
-      prescriptionDTO,
-      insuranceCompany,
-      req.user,
+    this.mailingService.sendPrescription(
+      patient.email,
+      patient,
+      prescription.doctor,
       prescription,
-      prescription.presentation,
     );
     return prescription;
   }

@@ -41,8 +41,8 @@ model User {
 
 model Patient {
   id                 Int              @id @default(autoincrement())
-  doctor             Doctor           @relation(fields: [doctorId], references: [id])
-  doctorId           Int
+  doctor             Doctor?          @relation(fields: [doctorId], references: [id])
+  doctorId           Int?
   name               String
   lastName           String
   dni                Int
@@ -79,8 +79,8 @@ model Prescription {
   presentationId    Int
   presentation      Presentation       @relation(fields: [presentationId], references: [id])
   indication        String
-  patient           Patient?           @relation(fields: [patientId], references: [id])
-  patientId         Int?
+  patient           Patient            @relation(fields: [patientId], references: [id])
+  patientId         Int
   doctor            Doctor?            @relation(fields: [doctorId], references: [id])
   doctorId          Int?
   quantity          Int

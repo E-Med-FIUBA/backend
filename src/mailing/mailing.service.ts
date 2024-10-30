@@ -7,17 +7,7 @@ import { compile } from 'handlebars';
 import { readFileSync } from 'fs';
 
 import { toBuffer } from 'qrcode';
-import {
-  Doctor,
-  InsuranceCompany,
-  Patient,
-  Prescription,
-  Presentation,
-  Sex,
-  Specialty,
-  User,
-} from '@prisma/client';
-import { PatientlessPrescriptionDTO } from 'src/models/prescriptions/dto/patientless-prescription.dto';
+import { Doctor, Patient, Prescription, Sex } from '@prisma/client';
 
 const logger = new Logger();
 
@@ -107,60 +97,6 @@ export class MailingService {
               prescription: {
                 ...prescription,
                 emitedAt: prescription.emitedAt.toISOString().split('T')[0],
-              },
-              qrCode: 'cid:qrcode',
-            }),
-            attachments,
-          });
-        }
-      },
-    );
-  }
-
-  public async sendPatientlessPrescription(
-    prescriptionData: PatientlessPrescriptionDTO,
-    insuranceCompany: InsuranceCompany,
-    doctorUser: User & { doctor: Doctor; specialty: Specialty },
-    prescription: Prescription,
-    presentation: Presentation,
-  ): Promise<void> {
-    toBuffer(
-      prescription.id.toString(),
-      { type: 'png', scale: 10 },
-      (error, buffer) => {
-        if (error) {
-          console.error(error);
-        } else {
-          const attachments = [];
-          attachments.push({
-            filename: 'qrcode.png',
-            content: buffer,
-            cid: 'qrcode',
-          });
-
-          this.transporter.sendMail({
-            from: process.env.MAIL_USER,
-            to: prescriptionData.email,
-            subject: 'Prescription', // TODO: Change this
-            html: this.prescriptionTemplate({
-              // TODO: Check these have the template variables
-              patient: {
-                name: prescriptionData.name,
-                lastName: prescriptionData.lastName,
-                insuranceCompany,
-                dni: prescriptionData.dni,
-                birthDate: prescriptionData.birthDate,
-                sex: sexMap[prescriptionData.sex],
-              },
-              doctor: {
-                user: doctorUser,
-                license: doctorUser.doctor.license,
-                specialty: doctorUser.specialty,
-              },
-              prescription: {
-                presentation,
-                emitedAt: prescription.emitedAt.toISOString().split('T')[0],
-                quantity: prescriptionData.quantity,
               },
               qrCode: 'cid:qrcode',
             }),
