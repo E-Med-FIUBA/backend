@@ -15,12 +15,17 @@ import { PatientDTO } from './dto/patient.dto';
 import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { Patient } from '@prisma/client';
+import { PatientNotesService } from '../patient-notes/patient-notes.service';
+import { CreatePatientNoteDto } from '../patient-notes/dto/create-patient-note.dto';
 
 @ApiTags('patients')
 @Controller('patients')
 @UseGuards(AuthGuard)
 export class PatientsController {
-  constructor(private patientsService: PatientsService) {}
+  constructor(
+    private patientsService: PatientsService,
+    private patientNotesService: PatientNotesService,
+  ) {}
 
   @Post()
   create(@Req() req, @Body() data: PatientDTO) {
@@ -63,5 +68,15 @@ export class PatientsController {
   @Delete(':id')
   remove(@Param('id') id: number) {
     return this.patientsService.remove(id);
+  }
+
+  @Get(':id/notes')
+  getNotes(@Param('id') id: number) {
+    return this.patientsService.getNotes(id);
+  }
+
+  @Post(':id/notes')
+  addNote(@Param('id') id: number, @Body() patientNote: CreatePatientNoteDto) {
+    return this.patientNotesService.create(id, patientNote);
   }
 }

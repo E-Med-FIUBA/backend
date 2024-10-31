@@ -16,6 +16,7 @@ import { SpecialtyModule } from './models/specialty/specialty.module';
 import { InsuranceModule } from './models/insurance/insurance.module';
 import { MailingModule } from './mailing/mailing.module';
 import { SignatureModule } from './models/signature/signature.module';
+import { PatientNotesModule } from './models/patient-notes/patient-notes.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,6 +36,7 @@ import { SignatureModule } from './models/signature/signature.module';
     InsuranceModule,
     MailingModule,
     SignatureModule,
+    PatientNotesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
