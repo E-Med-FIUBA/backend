@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prescription } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
-import { poseidon9 } from 'poseidon-lite';
+import { poseidon6 } from 'poseidon-lite';
 import { TreeService } from 'src/models/tree.service';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class PrescriptionsTreeService extends TreeService {
   }
 
   hashData = (prescription: Prescription) =>
-    poseidon9([
+    poseidon6([
       prescription.id,
       prescription.doctorId,
       prescription.presentationId,
