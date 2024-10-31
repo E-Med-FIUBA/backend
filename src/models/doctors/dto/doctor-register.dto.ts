@@ -9,7 +9,4 @@ export class DoctorRegisterDTO extends UserRegisterDTO {
   @Type(() => Number)
   @IsNumber()
   specialtyId: number;
-
-  @IsNotEmpty()
-  certificateRequest: string;
 }

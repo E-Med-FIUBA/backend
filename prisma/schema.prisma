@@ -68,7 +68,9 @@ model Doctor {
   doctorNodes        DoctorNode[]
   certificateRequest String
   certificate        String?
-  privateKey         String?
+  privateKey         String
+  salt               String
+  iv                 String
 }
 
 model Specialty {

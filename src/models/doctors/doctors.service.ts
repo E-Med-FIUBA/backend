@@ -7,25 +7,31 @@ import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service
 import { ContractService, Proof } from '../contract/contract.service';
 import { PrismaTransactionalClient } from 'utils/types';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
+import { DoctorData, SignatureService } from 'src/signature/signature.service';
 
 @Injectable()
 export class DoctorsService {
+
   constructor(
     private prisma: PrismaService,
     private patientsService: PatientsService,
     private doctorsTreeService: DoctorsTreeService,
     private contractService: ContractService,
-  ) {}
+    private signatureService: SignatureService,
+  ) { }
 
   async create(
-    data: Omit<Doctor, 'id'>,
+    data: DoctorData,
     tx: PrismaTransactionalClient = this.prisma,
   ) {
+    const credentials = await this.signatureService.generateCredentials({ ...data, countryName: 'AR', localityName: 'CABA', province: 'CABA' });
     const doctor = await tx.doctor.create({
       data: {
         license: data.license,
-        certificateRequest: data.certificateRequest,
-        privateKey: data.privateKey,
+        certificateRequest: credentials.csr,
+        privateKey: credentials.privateKey,
+        salt: credentials.salt,
+        iv: credentials.iv,
         user: {
           connect: {
             id: data.userId
@@ -103,5 +109,13 @@ export class DoctorsService {
 
   getDoctorsPatients(id: number) {
     return this.patientsService.findDoctorPatients(id);
+  }
+
+  getDoctorByUserId(userId: number) {
+    return this.prisma.doctor.findUnique({
+      where: {
+        userId,
+      },
+    });
   }
 }

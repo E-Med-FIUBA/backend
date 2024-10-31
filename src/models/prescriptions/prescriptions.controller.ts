@@ -28,7 +28,7 @@ export class PrescriptionsController {
     private prescriptionsService: PrescriptionsService,
     private patientsService: PatientsService,
     private mailingService: MailingService,
-  ) {}
+  ) { }
 
   @Get()
   findAll(@Req() req): Promise<Prescription[]> {
@@ -42,6 +42,11 @@ export class PrescriptionsController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
     return this.prescriptionsService.findOne(id);
+  }
+
+  @Get(':id/verify')
+  verify(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
+    return this.prescriptionsService.verify(id);
   }
 
   @Post()

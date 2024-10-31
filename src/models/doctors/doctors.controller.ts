@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -13,12 +14,27 @@ import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
 import { User } from '@prisma/client';
+import { SignatureService } from 'src/signature/signature.service';
 
 @ApiTags('doctors')
 @Controller('doctors')
 @UseGuards(AuthGuard)
 export class DoctorsController {
-  constructor(private doctorsService: DoctorsService) { }
+  constructor(private doctorsService: DoctorsService, private signatureService: SignatureService) { }
+
+  @Get('private-key')
+  public async getPrivateKey(@Req() req: Request & { user: User }): Promise<{ privateKey: string }> {
+    const user = req.user;
+
+    const doctor = await this.doctorsService.getDoctorByUserId(user.id);
+
+    if (!doctor) {
+      throw new BadRequestException('Doctor not found');
+    }
+
+    return { privateKey: await this.signatureService.getPrivateKeyPEM(doctor.id) };
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.doctorsService.findOne(id);
@@ -41,14 +57,4 @@ export class DoctorsController {
   }
 
 
-  @Get('certificate')
-  public async getCertificate(@Req() req: Request & { user: User }): Promise<{ certificate: string }> {
-    const user = req.user;
-
-    // const doctor = await this.doctorsService.findByUserId(user.id);
-
-    // return doctor.certificate;
-
-    return null
-  }
 }

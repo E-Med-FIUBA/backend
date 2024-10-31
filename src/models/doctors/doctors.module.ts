@@ -9,6 +9,7 @@ import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service
 import { DoctorsTreeModule } from 'src/models/doctors-tree/doctors-tree.module';
 import { ContractModule } from '../contract/contract.module';
 import { ContractService } from '../contract/contract.service';
+import { SignatureModule } from 'src/signature/signature.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ContractService } from '../contract/contract.service';
     UsersModule,
     DoctorsTreeModule,
     ContractModule,
+    SignatureModule
   ],
   controllers: [DoctorsController],
   providers: [
@@ -29,4 +31,4 @@ import { ContractService } from '../contract/contract.service';
   ],
   exports: [DoctorsService],
 })
-export class DoctorsModule {}
+export class DoctorsModule { }

@@ -13,6 +13,7 @@ import { ContractService } from '../contract/contract.service';
 import { MailingModule } from 'src/mailing/mailing.module';
 import { PatientsModule } from '../patients/patients.module';
 import { PatientsService } from '../patients/patients.service';
+import { SignatureModule } from 'src/signature/signature.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PatientsService } from '../patients/patients.service';
     ContractModule,
     PatientsModule,
     MailingModule,
+    SignatureModule
   ],
   controllers: [PrescriptionsController],
   providers: [
@@ -37,4 +39,4 @@ import { PatientsService } from '../patients/patients.service';
   ],
   exports: [PrescriptionsService],
 })
-export class PrescriptionsModule {}
+export class PrescriptionsModule { }

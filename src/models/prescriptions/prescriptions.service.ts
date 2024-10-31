@@ -7,15 +7,18 @@ import { groth16 } from 'snarkjs';
 import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
 import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
 import { ContractService, Proof } from '../contract/contract.service';
+import { SignatureService } from 'src/signature/signature.service';
 
 @Injectable()
 export class PrescriptionsService {
+
   constructor(
     private prisma: PrismaService,
     private doctorsTreeService: DoctorsTreeService,
     private prescriptionsTreeService: PrescriptionsTreeService,
     private contractService: ContractService,
-  ) {}
+    private signatureService: SignatureService,
+  ) { }
 
   async create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
@@ -146,5 +149,23 @@ export class PrescriptionsService {
         id,
       },
     });
+  }
+
+  async verify(id: number): Promise<boolean> {
+    const prescription = await this.prisma.prescription.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        presentation: true
+      },
+    });
+
+    const drugId = prescription.presentation.drugId;
+    const doctorId = prescription.doctorId;
+
+    const data = { medicationId: drugId, presentation: prescription.presentationId, diagnosis: prescription.indication }
+
+    return this.signatureService.verify(doctorId, JSON.stringify(data), prescription.signature);
   }
 }
