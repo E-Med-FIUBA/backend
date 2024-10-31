@@ -23,7 +23,6 @@ const splitKey = (_key: number): boolean[] => {
 };
 
 interface ProofGenerationData {
-  fnc: [number, number];
   oldRoot: bigint;
   newRoot: bigint;
   siblings: bigint[];
@@ -99,7 +98,6 @@ export class TreeService {
     const newRootHash = await this.updateHashes(currentNode, tx);
 
     return {
-      fnc: [1, 0],
       oldRoot: BigInt(root.hash),
       newRoot: newRootHash,
       siblings: siblings,
@@ -193,7 +191,6 @@ export class TreeService {
     });
 
     return {
-      fnc: [1, 0],
       oldRoot: 0n,
       newRoot: rootHash,
       siblings: [0n, 0n, 0n, 0n],

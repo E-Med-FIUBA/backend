@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Receta Médica</title>
+    <style>
+      body {
+        font-family: 'Helvetica', 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+      }
+      .container {
+        position: relative;
+        width: 100%;
+        max-width: 700px;
+        margin: 20px auto;
+        background-color: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e0e0e0;
+      }
+      h2 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 40px;
+      }
+      .section {
+        margin-bottom: 20px;
+      }
+      .section h3 {
+        color: #3498db;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+      }
+      .section p {
+        margin: 8px 0;
+        color: #555;
+      }
+      .qr-code-header {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+      }
+      .qr-code-header img {
+        width: 70px;
+      }
+      .qr-code-footer {
+        display: none;
+      }
+      .qr-code-footer img {
+        width: 200px;
+      }
+      .date {
+        position: absolute;
+        top: 20px;
+        left: 30px;
+        font-size: 0.85em;
+        color: #888;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+      }
+      @media screen and (max-width: 600px) {
+        .qr-code-header {
+          display: none;
+        }
+
+        .qr-code-footer {
+          display: flex;
+          justify-content: center;
+          margin-top: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      {{#with prescription}}
+      <div class="date">
+        <span>{{emitedAt}}</span>
+      </div>
+      {{/with}}
+
+      <div class="qr-code-header">
+        <img
+          src="{{{qrCode}}}"
+          alt="QR Code"
+        />
+      </div>
+
+      <h2>Prescripcion Médica Electrónica</h2>
+
+      <div class="grid">
+        <!-- Identificación del paciente -->
+        {{#with patient}}
+        <div class="section">
+          <h3>Paciente</h3>
+          <p><strong>Nombre:</strong> {{name}} {{lastName}}</p>
+          {{#with insuranceCompany}}
+            <p><strong>Obra Social/Prepaga:</strong> {{name}}</p>
+          {{/with}}
+          <p><strong>Fecha de Nacimiento:</strong> {{birthDate}}</p>
+          <p><strong>DNI:</strong> {{dni}}</p>
+          <p><strong>Sexo:</strong> {{sex}}</p>
+        </div>
+        {{/with}}
+
+        <!-- Identificación del médico o profesional de la salud -->
+        {{#with doctor}}
+        <div class="section">
+          <h3>Profesional de la Salud</h3>
+          {{#with user}}
+            <p><strong>Nombre:</strong> Dr. {{name}} {{lastName}}</p>
+          {{/with}}
+          <p><strong>Matrícula:</strong> {{license}}</p>
+          {{#with specialty}}
+            <p><strong>Especialidad:</strong> {{name}}</p>
+          {{/with}}
+        </div>
+        {{/with}}
+      </div>
+      <div class="grid">
+        <!-- Medicamento -->
+        {{#with prescription}}
+        <div class="section">
+          <h3>Medicamento</h3>
+          {{#with presentation}}
+            {{#with drug}}
+              <p><strong>Nombre Genérico:</strong> {{name}}</p>
+            {{/with}}
+            <p><strong>Presentación:</strong> {{name}}</p>
+            <p><strong>Forma Farmacéutica:</strong> {{pharmaceuticForm}}</p>
+          {{/with}}
+          <p><strong>Cantidad de Unidades:</strong> {{quantity}}</p>
+        </div>
+
+        <!-- Diagnóstico -->
+        <div class="section">
+          <h3>Diagnóstico</h3>
+          <p>{{indication}}</p>
+        </div>
+        {{/with}}
+      </div>
+
+      <div class="qr-code-footer">
+        <img
+          src="{{qrCode}}"
+          alt="QR Code"
+        />
+      </div>
+    </div>
+  </body>
+</html>

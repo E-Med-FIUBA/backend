@@ -14,12 +14,9 @@ export class PrescriptionsTreeService extends TreeService {
     poseidon9([
       prescription.id,
       prescription.doctorId,
-      prescription.drugId,
+      prescription.presentationId,
       prescription.patientId,
       prescription.quantity,
-      prescription.startDate.getTime(),
-      prescription.endDate.getTime(),
-      prescription.duration,
-      prescription.frequency,
+      prescription.emitedAt.getTime(),
     ]);
 }

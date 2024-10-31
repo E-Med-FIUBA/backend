@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PatientDTO } from './dto/patient.dto';
+import { Patient } from '@prisma/client';
 
 @Injectable()
 export class PatientsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: PatientDTO) {
+  async create(data: Omit<Patient, 'id'>) {
     return this.prisma.patient.create({
       data,
     });
