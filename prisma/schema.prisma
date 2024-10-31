@@ -53,7 +53,7 @@ model Patient {
   sex                Sex
   affiliateNumber    Int
   prescriptions      Prescription[]
-  patientNotes       PatientNotes[]
+  patientNotes       PatientNote[]
 }
 
 model Doctor {
@@ -140,13 +140,13 @@ model InsuranceCompany {
   patient Patient[]
 }
 
-model PatientNotes {
-  id        Int      @id @default(autoincrement())
-  patient   Patient  @relation(fields: [patientId], references: [id])
+model PatientNote {
+  id        Int       @id @default(autoincrement())
+  patient   Patient   @relation(fields: [patientId], references: [id])
   patientId Int
   note      String
-  createdAt DateTime
-  updatedAt DateTime
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
 }
 
 enum Sex {

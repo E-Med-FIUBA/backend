@@ -66,4 +66,12 @@ export class PatientsService {
       },
     });
   }
+
+  getNotes(id: number) {
+    return this.prisma.patientNote.findMany({
+      where: {
+        patientId: id,
+      },
+    });
+  }
 }
