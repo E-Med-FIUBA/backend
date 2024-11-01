@@ -129,8 +129,11 @@ export class AuthService {
               userId: user.id,
               license: doctor.license,
               specialtyId: doctor.specialtyId,
-              certificateRequest: doctor.certificateRequest,
-              certificate: null
+              certificateRequest: null,
+              certificate: null,
+              privateKey: null,
+              name: user.name,
+              lastName: user.lastName,
             },
             tx,
           );
