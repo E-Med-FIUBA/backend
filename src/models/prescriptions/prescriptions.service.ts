@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { Prescription } from '@prisma/client';
@@ -151,13 +151,22 @@ export class PrescriptionsService {
     });
   }
 
-  async verify(id: number): Promise<boolean> {
+  async verify(id: number): Promise<Prescription> {
     const prescription = await this.prisma.prescription.findUnique({
       where: {
         id,
       },
       include: {
-        presentation: true
+        presentation: {
+          include: {
+            drug: true,
+          }
+        },
+        doctor: {
+          include: {
+            user: true,
+          }
+        }
       },
     });
 
@@ -166,6 +175,11 @@ export class PrescriptionsService {
 
     const data = { medicationId: drugId, presentation: prescription.presentationId, diagnosis: prescription.indication }
 
-    return this.signatureService.verify(doctorId, JSON.stringify(data), prescription.signature);
+    const isValid = await this.signatureService.verify(doctorId, JSON.stringify(data), prescription.signature);
+
+    if (!isValid) {
+      throw new BadRequestException('Prescripcion invalida');
+    }
+    return prescription;
   }
 }

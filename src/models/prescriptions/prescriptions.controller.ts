@@ -45,7 +45,7 @@ export class PrescriptionsController {
   }
 
   @Get(':id/verify')
-  verify(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
+  verify(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
     return this.prescriptionsService.verify(id);
   }
 
