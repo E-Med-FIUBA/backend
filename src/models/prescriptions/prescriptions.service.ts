@@ -1,6 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { PrescriptionDTO } from './dto/prescription.dto';
 import { Prescription } from '@prisma/client';
 import { poseidon3 } from 'poseidon-lite';
 import { groth16 } from 'snarkjs';
@@ -11,14 +14,13 @@ import { SignatureService } from 'src/signature/signature.service';
 
 @Injectable()
 export class PrescriptionsService {
-
   constructor(
     private prisma: PrismaService,
     private doctorsTreeService: DoctorsTreeService,
     private prescriptionsTreeService: PrescriptionsTreeService,
     private contractService: ContractService,
     private signatureService: SignatureService,
-  ) { }
+  ) {}
 
   async create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
@@ -134,21 +136,44 @@ export class PrescriptionsService {
     });
   }
 
-  update(id: number, data: PrescriptionDTO) {
-    return this.prisma.prescription.update({
-      where: {
-        id,
-      },
-      data,
-    });
-  }
+  markAsUsed(id: number) {
+    return this.prisma.$transaction(
+      async (tx) => {
+        const updatedPrescription = await tx.prescription.update({
+          where: {
+            id,
+          },
+          data: {
+            used: true,
+          },
+        });
 
-  remove(id: number) {
-    return this.prisma.prescription.delete({
-      where: {
-        id,
+        if (process.env.DISABLE_BLOCKCHAIN) {
+          return updatedPrescription;
+        }
+
+        const proofData = await this.prescriptionsTreeService.markAsUsed(
+          updatedPrescription,
+          tx,
+        );
+
+        const { proof }: { proof: Proof } = await groth16.fullProve(
+          proofData,
+          'validium/update_validation.wasm',
+          'validium/update_circuit_final.zkey',
+        );
+
+        await this.contractService.updatePrescriptionUsed(
+          proofData.newRoot,
+          proof,
+        );
+
+        return updatedPrescription;
       },
-    });
+      {
+        timeout: 60000,
+      },
+    );
   }
 
   async verify(id: number): Promise<Prescription> {
@@ -160,22 +185,30 @@ export class PrescriptionsService {
         presentation: {
           include: {
             drug: true,
-          }
+          },
         },
         doctor: {
           include: {
             user: true,
-          }
-        }
+          },
+        },
       },
     });
 
     const drugId = prescription.presentation.drugId;
     const doctorId = prescription.doctorId;
 
-    const data = { medicationId: drugId, presentation: prescription.presentationId, diagnosis: prescription.indication }
+    const data = {
+      medicationId: drugId,
+      presentation: prescription.presentationId,
+      diagnosis: prescription.indication,
+    };
 
-    const isValid = await this.signatureService.verify(doctorId, JSON.stringify(data), prescription.signature);
+    const isValid = await this.signatureService.verify(
+      doctorId,
+      JSON.stringify(data),
+      prescription.signature,
+    );
 
     if (!isValid) {
       throw new BadRequestException('Prescripcion invalida');

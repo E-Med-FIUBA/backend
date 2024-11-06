@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 
 import * as ContractArtifact from 'contracts/RootManager.sol/RootManager.json';
+
+const REQUIRED_REPLIES = 2;
+
 const PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY || '';
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '';
 
@@ -64,7 +67,7 @@ export class ContractService {
         gasLimit: estimatedGasLimit,
       },
     );
-    return txDoctorCreate.wait();
+    return txDoctorCreate.wait(REQUIRED_REPLIES);
   }
 
   async updatePrescriptionsMerkleRoot(newRoot: bigint, proof: Proof) {
@@ -91,6 +94,32 @@ export class ContractService {
       },
     );
 
-    return txPrescriptionCreate.wait();
+    return txPrescriptionCreate.wait(REQUIRED_REPLIES);
+  }
+
+  async updatePrescriptionUsed(newRoot: bigint, proof: Proof) {
+    const parsedNewRoot = toHex(newRoot);
+    const parsedProof = parseProof(proof);
+
+    const estimatedGasLimit = await contract.verifyMarkAsUsed.estimateGas(
+      parsedNewRoot,
+      parsedProof.pi_a,
+      parsedProof.pi_b,
+      parsedProof.pi_c,
+    );
+
+    console.log('estimatedGasLimit', estimatedGasLimit);
+
+    const txPrescriptionUsed = await contract.verifyMarkAsUsed(
+      parsedNewRoot,
+      parsedProof.pi_a,
+      parsedProof.pi_b,
+      parsedProof.pi_c,
+      {
+        gasLimit: estimatedGasLimit,
+      },
+    );
+
+    return txPrescriptionUsed.wait(REQUIRED_REPLIES);
   }
 }

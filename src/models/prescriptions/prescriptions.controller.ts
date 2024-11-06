@@ -3,12 +3,10 @@ import { PrescriptionsService } from './prescriptions.service';
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   ParseIntPipe,
   Post,
-  Put,
   Req,
   UnauthorizedException,
   UseGuards,
@@ -28,7 +26,7 @@ export class PrescriptionsController {
     private prescriptionsService: PrescriptionsService,
     private patientsService: PatientsService,
     private mailingService: MailingService,
-  ) { }
+  ) {}
 
   @Get()
   findAll(@Req() req): Promise<Prescription[]> {
@@ -63,6 +61,7 @@ export class PrescriptionsController {
       ...prescriptionDTO,
       emitedAt: new Date(),
       doctorId,
+      used: false,
     });
 
     this.mailingService.sendPrescription(
@@ -101,6 +100,7 @@ export class PrescriptionsController {
       patientId: patient.id,
       emitedAt: new Date(),
       doctorId,
+      used: false,
     });
 
     this.mailingService.sendPrescription(
@@ -112,16 +112,9 @@ export class PrescriptionsController {
     return prescription;
   }
 
-  @Put(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() prescriptionDTO: PrescriptionDTO,
-  ): Promise<Prescription> {
-    return this.prescriptionsService.update(id, prescriptionDTO);
-  }
-
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
-    return this.prescriptionsService.remove(id);
+  @Post(':id/use')
+  markAsUsed(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
+    // TODO: Add pharma guard
+    return this.prescriptionsService.markAsUsed(id);
   }
 }
