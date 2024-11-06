@@ -93,4 +93,30 @@ export class ContractService {
 
     return txPrescriptionCreate.wait();
   }
+
+  async updatePrescriptionUsed(newRoot: bigint, proof: Proof) {
+    const parsedNewRoot = toHex(newRoot);
+    const parsedProof = parseProof(proof);
+
+    const estimatedGasLimit = await contract.verifyMarkAsUsed.estimateGas(
+      parsedNewRoot,
+      parsedProof.pi_a,
+      parsedProof.pi_b,
+      parsedProof.pi_c,
+    );
+
+    console.log('estimatedGasLimit', estimatedGasLimit);
+
+    const txPrescriptionUsed = await contract.verifyMarkAsUsed(
+      parsedNewRoot,
+      parsedProof.pi_a,
+      parsedProof.pi_b,
+      parsedProof.pi_c,
+      {
+        gasLimit: estimatedGasLimit,
+      },
+    );
+
+    return txPrescriptionUsed.wait();
+  }
 }

@@ -13,7 +13,7 @@ const padArray = <T>(
   return arr.concat(Array(length - arr.length).fill(paddingValue));
 };
 
-const splitKey = (_key: number): boolean[] => {
+export const splitKey = (_key: number): boolean[] => {
   const key = _key
     .toString(2)
     .split('')
@@ -22,7 +22,7 @@ const splitKey = (_key: number): boolean[] => {
   return padArray(key, keyLength, false);
 };
 
-interface ProofGenerationData {
+export interface ProofGenerationData {
   oldRoot: bigint;
   newRoot: bigint;
   siblings: bigint[];
@@ -40,7 +40,7 @@ interface NodeData {
 
 interface Node {
   id: number;
-  hash: bigint;
+  hash: string;
   key: number | null;
   parent_id: number | null;
   side: ChildSide | null;
@@ -57,10 +57,10 @@ export class TreeService {
     }
   }
 
-  private hash0 = (left: bigint, right: bigint): bigint =>
+  protected hash0 = (left: bigint, right: bigint): bigint =>
     poseidon2([left, right]);
 
-  private hash1 = (key: bigint | number, value: bigint): bigint =>
+  protected hash1 = (key: bigint | number, value: bigint): bigint =>
     poseidon3([key, value, 1n]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -109,7 +109,7 @@ export class TreeService {
     };
   }
 
-  private async getSiblingsAndOldNode(
+  protected async getSiblingsAndOldNode(
     root: Node,
     binaryKey: boolean[],
     tx: PrismaTransactionalClient = this.prisma,
@@ -202,11 +202,11 @@ export class TreeService {
     };
   }
 
-  private async updateHashes(
+  protected async updateHashes(
     currentNode: Node,
     tx: PrismaTransactionalClient = this.prisma,
   ): Promise<bigint> {
-    let currentHash = currentNode.hash;
+    let currentHash = BigInt(currentNode.hash);
     while (currentNode) {
       const leftChild = await this.getChild(currentNode.id, ChildSide.LEFT, tx);
       const rightChild = await this.getChild(
