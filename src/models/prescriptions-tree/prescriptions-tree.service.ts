@@ -9,11 +9,9 @@ interface UpdateProofGenerationData {
   oldRoot: bigint;
   newRoot: bigint;
   siblings: bigint[];
-  isOld0: number;
   oldKey: number;
   oldValue: bigint;
   key: number;
-  id: number;
   doctorId: number;
   presentationId: number;
   patientId: number;
@@ -74,37 +72,18 @@ export class PrescriptionsTreeService extends TreeService {
     });
 
     let newRootHash: bigint;
-    console.log(updatedPrescriptionNode.parent);
     if (!updatedPrescriptionNode.parent) {
       newRootHash = BigInt(updatedPrescriptionNode.hash);
     } else {
       newRootHash = await this.updateHashes(updatedPrescriptionNode.parent, tx);
     }
 
-    console.log({
-      isOld0: 0,
-      oldRoot: BigInt(oldRoot.hash),
-      newRoot: newRootHash,
-      siblings,
-      key: updatedPrescriptionNode.key,
-      doctorId: prescription.doctorId,
-      id: prescription.id,
-      patientId: prescription.patientId,
-      presentationId: prescription.presentationId,
-      quantity: prescription.quantity,
-      emitedAt: prescription.emitedAt.getTime(),
-      oldKey: oldNode.key,
-      oldValue: this.hashData({ ...prescription, used: false }), // TODO: Check for another way of getting the old value
-    });
-
     return {
-      isOld0: 0,
       oldRoot: BigInt(oldRoot.hash),
       newRoot: newRootHash,
       siblings,
       key: updatedPrescriptionNode.key,
       doctorId: prescription.doctorId,
-      id: prescription.id,
       patientId: prescription.patientId,
       presentationId: prescription.presentationId,
       quantity: prescription.quantity,
