@@ -28,7 +28,7 @@ export class PrescriptionsController {
     private prescriptionsService: PrescriptionsService,
     private patientsService: PatientsService,
     private mailingService: MailingService,
-  ) { }
+  ) {}
 
   @Get()
   findAll(@Req() req): Promise<Prescription[]> {
@@ -63,6 +63,7 @@ export class PrescriptionsController {
       ...prescriptionDTO,
       emitedAt: new Date(),
       doctorId,
+      used: false,
     });
 
     this.mailingService.sendPrescription(
@@ -101,6 +102,7 @@ export class PrescriptionsController {
       patientId: patient.id,
       emitedAt: new Date(),
       doctorId,
+      used: false,
     });
 
     this.mailingService.sendPrescription(
