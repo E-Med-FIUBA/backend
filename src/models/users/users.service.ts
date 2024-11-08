@@ -54,7 +54,7 @@ export class UsersService {
     });
   }
 
-  findByUIDIncludeData(uid: string): Promise<User> {
+  findByUIDIncludeData(uid: string) {
     return this.prisma.user.findUnique({
       where: {
         uid,

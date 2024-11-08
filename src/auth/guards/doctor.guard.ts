@@ -6,13 +6,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
-import { firebaseAdmin } from '../firebase/firebase';
-import { UsersService } from '../models/users/users.service';
+import { firebaseAdmin } from '../../firebase/firebase';
+import { UsersService } from '../../models/users/users.service';
 
 const logger = new Logger();
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class DoctorGuard implements CanActivate {
   constructor(private usersService: UsersService) { }
 
   public async canActivate(ctx: ExecutionContext): Promise<boolean> | never {
@@ -26,6 +26,11 @@ export class AuthGuard implements CanActivate {
       const user = await this.usersService.findByUIDIncludeData(
         decodedToken.uid,
       );
+
+      if (!user.doctor) {
+        throw new UnauthorizedException('Error: User is not a doctor');
+      }
+
       request.user = user;
       return true;
     } catch (err) {

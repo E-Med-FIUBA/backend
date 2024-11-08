@@ -12,23 +12,26 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PrescriptionDTO } from './dto/prescription.dto';
-import { AuthGuard } from '../../auth/auth.guard';
+import { AuthGuard } from '../../auth/guards/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { MailingService } from 'src/mailing/mailing.service';
 import { PatientlessPrescriptionDTO } from './dto/patientless-prescription.dto';
 import { PatientsService } from '../patients/patients.service';
+import { DoctorGuard } from 'src/auth/guards/doctor.guard';
+import { PharmacistGuard } from 'src/auth/guards/pharmacist.guard';
 
 @ApiTags('prescriptions')
 @Controller('prescriptions')
-@UseGuards(AuthGuard)
+
 export class PrescriptionsController {
   constructor(
     private prescriptionsService: PrescriptionsService,
     private patientsService: PatientsService,
     private mailingService: MailingService,
-  ) {}
+  ) { }
 
   @Get()
+  @UseGuards(DoctorGuard)
   findAll(@Req() req): Promise<Prescription[]> {
     const doctorId = req.user?.doctor?.id;
     if (!doctorId) {
@@ -38,16 +41,19 @@ export class PrescriptionsController {
   }
 
   @Get(':id')
+  @UseGuards(DoctorGuard)
   findOne(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
     return this.prescriptionsService.findOne(id);
   }
 
   @Get(':id/verify')
+  @UseGuards(PharmacistGuard)
   verify(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
     return this.prescriptionsService.verify(id);
   }
 
   @Post()
+  @UseGuards(DoctorGuard)
   async create(
     @Body() prescriptionDTO: PrescriptionDTO,
     @Req() req,
@@ -74,6 +80,7 @@ export class PrescriptionsController {
   }
 
   @Post('patientless')
+  @UseGuards(DoctorGuard)
   async createPatientless(
     @Body() prescriptionDTO: PatientlessPrescriptionDTO,
     @Req() req,
@@ -113,8 +120,8 @@ export class PrescriptionsController {
   }
 
   @Post(':id/use')
+  @UseGuards(PharmacistGuard)
   markAsUsed(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
-    // TODO: Add pharma guard
     return this.prescriptionsService.markAsUsed(id);
   }
 }

@@ -1,10 +1,12 @@
-import { Controller, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Body, Param, Delete, Put, UseGuards } from '@nestjs/common';
 import { PatientNotesService } from './patient-notes.service';
 import { UpdatePatientNoteDto } from './dto/update-patient-note.dto';
+import { DoctorGuard } from 'src/auth/guards/doctor.guard';
 
 @Controller('patient-notes')
+@UseGuards(DoctorGuard)
 export class PatientNotesController {
-  constructor(private readonly patientNotesService: PatientNotesService) {}
+  constructor(private readonly patientNotesService: PatientNotesService) { }
 
   @Put(':id')
   update(

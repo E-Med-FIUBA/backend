@@ -10,14 +10,14 @@ import {
 } from '@nestjs/common';
 import { DrugDTO } from './dto/drug.dto';
 import { DrugsService } from './drugs.service';
-import { AuthGuard } from '../../auth/auth.guard';
+import { AuthGuard } from '../../auth/guards/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('drugs')
 @Controller('drugs')
 @UseGuards(AuthGuard)
 export class DrugsController {
-  constructor(private drugsService: DrugsService) {}
+  constructor(private drugsService: DrugsService) { }
 
   @Post()
   create(@Body() data: DrugDTO) {
