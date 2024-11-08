@@ -94,7 +94,7 @@ export class ContractService {
       },
     );
 
-    return txPrescriptionCreate.wait(REQUIRED_REPLIES);
+    return txPrescriptionCreate.hash;
   }
 
   async updatePrescriptionUsed(newRoot: bigint, proof: Proof) {
@@ -121,5 +121,15 @@ export class ContractService {
     );
 
     return txPrescriptionUsed.wait(REQUIRED_REPLIES);
+  }
+
+  async isTransactionConfirmed(txHash: string) {
+    const receipt = await provider.getTransactionReceipt(txHash);
+
+    if (!receipt) {
+      return false;
+    }
+
+    return receipt.status === 1;
   }
 }

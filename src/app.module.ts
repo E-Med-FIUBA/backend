@@ -17,12 +17,15 @@ import { InsuranceModule } from './models/insurance/insurance.module';
 import { MailingModule } from './mailing/mailing.module';
 import { SignatureModule } from './signature/signature.module';
 import { PatientNotesModule } from './models/patient-notes/patient-notes.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PrescriptionStagingTreeModule } from './models/prescription-staging-tree/prescription-staging-tree.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     DoctorsModule,
     DrugsModule,
     PatientsModule,
@@ -38,8 +41,9 @@ import { PatientNotesModule } from './models/patient-notes/patient-notes.module'
     MailingModule,
     SignatureModule,
     PatientNotesModule,
+    PrescriptionStagingTreeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -11,13 +11,18 @@ import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service
 import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
 import { ContractService, Proof } from '../contract/contract.service';
 import { SignatureService } from 'src/signature/signature.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { PrescriptionStagingTreeService } from '../prescription-staging-tree/prescription-staging-tree.service';
 
 @Injectable()
 export class PrescriptionsService {
+  private isQueueProcessing = false;
+
   constructor(
     private prisma: PrismaService,
     private doctorsTreeService: DoctorsTreeService,
     private prescriptionsTreeService: PrescriptionsTreeService,
+    private prescriptionsStagingTreeService: PrescriptionStagingTreeService,
     private contractService: ContractService,
     private signatureService: SignatureService,
   ) {}
@@ -78,7 +83,7 @@ export class PrescriptionsService {
           tx,
         );
 
-        const proofData = await this.prescriptionsTreeService.createNode(
+        const proofData = await this.prescriptionsStagingTreeService.createNode(
           prescription,
           tx,
         );
@@ -95,10 +100,21 @@ export class PrescriptionsService {
           'validium/prescription_circuit_final.zkey',
         );
 
-        await this.contractService.updatePrescriptionsMerkleRoot(
+        const txHash = await this.contractService.updatePrescriptionsMerkleRoot(
           proofData.newRoot,
           proof,
         );
+
+        await tx.prescriptionNodeQueue.create({
+          data: {
+            transactionHash: txHash,
+            prescription: {
+              connect: {
+                id: prescription.id,
+              },
+            },
+          },
+        });
 
         return prescription;
       },
@@ -137,6 +153,8 @@ export class PrescriptionsService {
   }
 
   markAsUsed(id: number) {
+    // TODO: Add "queue" check
+
     return this.prisma.$transaction(
       async (tx) => {
         const updatedPrescription = await tx.prescription.update({
@@ -152,7 +170,7 @@ export class PrescriptionsService {
           return updatedPrescription;
         }
 
-        const proofData = await this.prescriptionsTreeService.markAsUsed(
+        const proofData = await this.prescriptionsStagingTreeService.markAsUsed(
           updatedPrescription,
           tx,
         );
@@ -214,5 +232,53 @@ export class PrescriptionsService {
       throw new BadRequestException('Prescripcion invalida');
     }
     return prescription;
+  }
+
+  @Cron(CronExpression.EVERY_30_SECONDS)
+  async processQueue() {
+    if (this.isQueueProcessing) {
+      return;
+    }
+    this.isQueueProcessing = true;
+
+    const queue = await this.prisma.prescriptionNodeQueue.findMany({
+      include: {
+        prescription: true,
+      },
+      orderBy: {
+        id: 'asc',
+      },
+      take: 100,
+    });
+
+    for (const queueItem of queue) {
+      // Check if transaction is confirmed
+      const isConfirmed = await this.contractService.isTransactionConfirmed(
+        queueItem.transactionHash,
+      );
+
+      if (!isConfirmed) {
+        break;
+      }
+
+      // Remove from queue and update prescription merkle tree
+
+      await this.prisma.$transaction(async (tx) => {
+        await tx.prescriptionNodeQueue.delete({
+          where: {
+            id: queueItem.id,
+          },
+        });
+
+        // TODO: Update prescription merkle tree according to "action" field
+        await this.prescriptionsTreeService.createNode(
+          queueItem.prescription,
+          tx,
+        );
+      });
+
+      console.log('created node for prescription', queueItem.prescription.id);
+    }
+    this.isQueueProcessing = false;
   }
 }

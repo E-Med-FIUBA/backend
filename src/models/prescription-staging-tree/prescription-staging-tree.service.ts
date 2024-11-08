@@ -9,9 +9,9 @@ import {
 } from 'utils/types';
 
 @Injectable()
-export class PrescriptionsTreeService extends TreeService {
+export class PrescriptionStagingTreeService extends TreeService {
   constructor(protected readonly prisma: PrismaService) {
-    super('prescriptionNode', 'prescription', prisma);
+    super('prescriptionNodeStaging', 'prescription', prisma);
   }
 
   hashData = (prescription: Prescription) =>

@@ -14,6 +14,8 @@ import { MailingModule } from 'src/mailing/mailing.module';
 import { PatientsModule } from '../patients/patients.module';
 import { PatientsService } from '../patients/patients.service';
 import { SignatureModule } from 'src/signature/signature.module';
+import { PrescriptionStagingTreeModule } from '../prescription-staging-tree/prescription-staging-tree.module';
+import { PrescriptionStagingTreeService } from '../prescription-staging-tree/prescription-staging-tree.service';
 
 @Module({
   imports: [
@@ -26,7 +28,8 @@ import { SignatureModule } from 'src/signature/signature.module';
     ContractModule,
     PatientsModule,
     MailingModule,
-    SignatureModule
+    SignatureModule,
+    PrescriptionStagingTreeModule,
   ],
   controllers: [PrescriptionsController],
   providers: [
@@ -34,9 +37,10 @@ import { SignatureModule } from 'src/signature/signature.module';
     ContractService,
     DoctorsTreeService,
     PrescriptionsTreeService,
+    PrescriptionStagingTreeService,
     PatientsService,
     PrismaService,
   ],
   exports: [PrescriptionsService],
 })
-export class PrescriptionsModule { }
+export class PrescriptionsModule {}
