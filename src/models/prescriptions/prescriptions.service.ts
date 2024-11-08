@@ -261,6 +261,8 @@ export class PrescriptionsService {
         break;
       }
 
+      // Check if tx failed --> if so, revert staging tree
+
       // Remove from queue and update prescription merkle tree
 
       await this.prisma.$transaction(async (tx) => {
