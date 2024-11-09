@@ -16,4 +16,4 @@ import { UsersService } from '../users/users.service';
   controllers: [PatientNotesController],
   providers: [PatientNotesService, UsersService, PrismaService],
 })
-export class PatientNotesModule {}
+export class PatientNotesModule { }
