@@ -123,7 +123,11 @@ export class PrescriptionsService {
             drug: true,
           },
         },
-        patient: true,
+        patient: {
+          include: {
+            insuranceCompany: true,
+          },
+        },
       },
     });
   }
