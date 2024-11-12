@@ -79,7 +79,11 @@ export class DoctorsService {
   }
 
   findAll(): Promise<Doctor[]> {
-    return this.prisma.doctor.findMany();
+    return this.prisma.doctor.findMany({
+      where: {
+        DoctorNodeQueue: null,
+      },
+    });
   }
 
   findOne(id: number): Promise<Doctor> {

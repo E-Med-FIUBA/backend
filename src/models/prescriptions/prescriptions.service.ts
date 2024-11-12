@@ -138,6 +138,7 @@ export class PrescriptionsService {
     return this.prisma.prescription.findMany({
       where: {
         doctorId,
+        prescriptionNodeQueue: null,
       },
       include: {
         presentation: {
@@ -269,6 +270,7 @@ export class PrescriptionsService {
     return this.prisma.prescription.findMany({
       where: {
         pharmacistId,
+        prescriptionNodeQueue: null,
       },
       include: {
         presentation: {
