@@ -252,16 +252,7 @@ export class PrescriptionsService {
     return prescription;
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
-  async processQueue() {
-    if (this.isQueueProcessing || process.env.DISABLE_BLOCKCHAIN) {
-      console.log('Queue is already processing');
-      return;
-    }
-    this.isQueueProcessing = true;
-
-    console.log('Processing queue');
-
+  private async regenerateTransactions() {
     const regenerationQueue = await this.prisma.prescriptionNodeQueue.findMany({
       where: {
         isRegeneration: true,
@@ -301,7 +292,50 @@ export class PrescriptionsService {
         }
       });
     }
+  }
 
+  private async revertQueue(
+    queue: Array<
+      PrescriptionNodeQueue & {
+        prescription: Prescription;
+      }
+    >,
+    fromId: number,
+  ) {
+    const itemsToRevert = queue.filter(
+      (item) => item.prescription.id >= fromId,
+    );
+    await this.prisma.$transaction(async (tx) => {
+      await this.revertStagingFrom(itemsToRevert, tx);
+      const { prescription } = await tx.prescriptionNodeQueue.delete({
+        where: {
+          id: fromId,
+        },
+        select: {
+          prescription: true,
+        },
+      });
+      await tx.prescription.delete({
+        where: {
+          id: prescription.id,
+        },
+      });
+      // Change existing tasks to regenerate proofs tasks in the queue
+      await tx.prescriptionNodeQueue.updateMany({
+        where: {
+          id: {
+            gt: fromId,
+          },
+        },
+        data: {
+          transactionHash: null,
+          isRegeneration: true,
+        },
+      });
+    });
+  }
+
+  async processPendingTransactions() {
     const queue = await this.prisma.prescriptionNodeQueue.findMany({
       include: {
         prescription: true,
@@ -318,34 +352,7 @@ export class PrescriptionsService {
         queueItem.transactionHash,
       );
       if (txFailed) {
-        const itemsToRevert = queue.filter(
-          (item) => item.prescription.id >= queueItem.prescription.id,
-        );
-        await this.prisma.$transaction(async (tx) => {
-          await this.revertStagingFrom(itemsToRevert, tx);
-          await tx.prescriptionNodeQueue.delete({
-            where: {
-              id: queueItem.id,
-            },
-          });
-          await tx.prescription.delete({
-            where: {
-              id: queueItem.prescription.id,
-            },
-          });
-          // Change existing tasks to regenerate proofs tasks in the queue
-          await tx.prescriptionNodeQueue.updateMany({
-            where: {
-              id: {
-                gt: queueItem.id,
-              },
-            },
-            data: {
-              transactionHash: null,
-              isRegeneration: true,
-            },
-          });
-        });
+        await this.revertQueue(queue, queueItem.id);
         console.log(
           'Reverted node for prescription',
           queueItem.prescription.id,
@@ -371,6 +378,22 @@ export class PrescriptionsService {
         this.sendPrescription(queueItem.prescription.id);
       });
     }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async processQueue() {
+    if (this.isQueueProcessing || process.env.DISABLE_BLOCKCHAIN) {
+      console.log('Queue is already processing');
+      return;
+    }
+    this.isQueueProcessing = true;
+
+    await this.regenerateTransactions();
+
+    console.log('Processing queue');
+
+    await this.processPendingTransactions();
+
     this.isQueueProcessing = false;
   }
 
