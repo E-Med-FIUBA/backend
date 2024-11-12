@@ -7,7 +7,7 @@ import { compile } from 'handlebars';
 import { readFileSync } from 'fs';
 
 import { toBuffer } from 'qrcode';
-import { Doctor, Patient, Prescription, Sex } from '@prisma/client';
+import { Doctor, Patient, Prescription, Sex, User } from '@prisma/client';
 
 const logger = new Logger();
 
@@ -66,7 +66,7 @@ export class MailingService {
   public async sendPrescription(
     to: string,
     patient: Patient,
-    doctor: Doctor,
+    doctor: Doctor & { user: User },
     prescription: Prescription,
   ): Promise<void> {
     toBuffer(
@@ -86,7 +86,7 @@ export class MailingService {
           this.transporter.sendMail({
             from: process.env.MAIL_USER,
             to,
-            subject: 'Prescription', // TODO: Change this
+            subject: `Receta del doctor ${doctor.user.name} ${doctor.user.lastName}`, // TODO: Change this
             html: this.prescriptionTemplate({
               patient: {
                 ...patient,

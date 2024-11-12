@@ -26,9 +26,15 @@ export class AuthController {
   }
 
   @HttpCode(200)
-  @Post('login')
-  login(@Body() loginInfo: LoginDTO): Promise<{ token: string }> {
-    return this.authService.login(loginInfo);
+  @Post('login/pharmacist')
+  loginPharmacist(@Body() loginInfo: LoginDTO): Promise<{ token: string }> {
+    return this.authService.loginPharmacist(loginInfo);
+  }
+
+  @HttpCode(200)
+  @Post('login/doctor')
+  loginDoctor(@Body() loginInfo: LoginDTO): Promise<{ token: string }> {
+    return this.authService.loginDoctor(loginInfo);
   }
 
   @HttpCode(200)

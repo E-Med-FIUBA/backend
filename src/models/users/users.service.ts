@@ -5,7 +5,7 @@ import { PrismaTransactionalClient } from 'utils/types';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   create(data: Omit<User, 'id'>, tx: PrismaTransactionalClient = this.prisma) {
     return tx.user.create({
@@ -50,11 +50,11 @@ export class UsersService {
     return this.prisma.user.findUnique({
       where: {
         uid,
-      }
+      },
     });
   }
 
-  findByUIDIncludeData(uid: string): Promise<User> {
+  findByUIDIncludeData(uid: string) {
     return this.prisma.user.findUnique({
       where: {
         uid,

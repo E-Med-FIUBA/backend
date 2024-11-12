@@ -284,4 +284,13 @@ export class DoctorsService {
       await this.doctorsTreeService.deleteNode(item.doctorId, tx);
     }
   }
+
+  async isActiveDoctor(doctorId: number) {
+    const doctor = await this.prisma.doctorNodeQueue.findFirst({
+      where: {
+        doctorId,
+      },
+    });
+    return doctor === null;
+  }
 }

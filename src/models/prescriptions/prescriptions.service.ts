@@ -159,7 +159,9 @@ export class PrescriptionsService {
   }
 
   markAsUsed(id: number) {
-    // TODO: Add "queue" check
+    if (!this.isActivePrescription(id)) {
+      throw new BadRequestException('Prescription is being processed');
+    }
 
     return this.prisma.$transaction(
       async (tx) => {
@@ -443,5 +445,14 @@ export class PrescriptionsService {
     const email = patient.email;
 
     this.mailingService.sendPrescription(email, patient, doctor, prescription);
+  }
+
+  async isActivePrescription(prescriptionId: number) {
+    const prescription = await this.prisma.prescriptionNodeQueue.findFirst({
+      where: {
+        prescriptionId,
+      },
+    });
+    return prescription === null;
   }
 }

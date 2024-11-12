@@ -12,6 +12,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { DoctorsService } from '../models/doctors/doctors.service';
 import { LoginDTO } from './dto/login.dto';
@@ -32,7 +33,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly pharmacistsService: PharmacistsService,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   async logout(): Promise<void> {
     const auth = getAuth(firebaseApp);
@@ -161,9 +162,44 @@ export class AuthService {
     return { token: await userCredentials.user.getIdToken() };
   }
 
-  async login(loginInfo: LoginDTO): Promise<{ token: string; userId: number }> {
+  private async getUser(loginInfo: LoginDTO) {
     const { token, uid } = await this.getUserToken(loginInfo);
-    const user = await this.usersService.findByUID(uid);
+    const user = await this.usersService.findByUIDIncludeData(uid);
+
+    return {
+      user,
+      token,
+    };
+  }
+
+  async loginPharmacist(
+    loginInfo: LoginDTO,
+  ): Promise<{ token: string; userId: number }> {
+    const { token, user } = await this.getUser(loginInfo);
+    if (!user?.pharmacist) {
+      throw new UnauthorizedException({
+        message: 'User is not a doctor',
+      });
+    }
+
+    return { token, userId: user?.id };
+  }
+
+  async loginDoctor(
+    loginInfo: LoginDTO,
+  ): Promise<{ token: string; userId: number }> {
+    const { token, user } = await this.getUser(loginInfo);
+    if (!user?.doctor) {
+      throw new UnauthorizedException({
+        message: 'User is not a doctor',
+      });
+    }
+
+    if (!this.doctorsService.isActiveDoctor(user.doctor.id)) {
+      throw new UnauthorizedException({
+        message: 'Doctor is being processed',
+      });
+    }
 
     return { token, userId: user?.id };
   }
