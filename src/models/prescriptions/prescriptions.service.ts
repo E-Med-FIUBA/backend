@@ -240,6 +240,8 @@ export class PrescriptionsService {
       diagnosis: prescription.indication,
     };
 
+    // TODO: Add blockchain verification
+
     const isValid = await this.signatureService.verify(
       doctorId,
       JSON.stringify(data),
@@ -276,13 +278,13 @@ export class PrescriptionsService {
 
         // Update tree
         if (queueItem.action === QueueAction.UPDATE) {
-          await this.markAsUsed(queueItem.prescription.id); // Maybe reuse the same queueItem? Not sure if it affects
+          await this.markAsUsed(queueItem.prescription.id); // Maybe reuse the same queueItem? Not sure if it affects. TODO: Add TX support
           console.log(
             'Updated node for prescription',
             queueItem.prescription.id,
           );
         } else if (queueItem.action === QueueAction.CREATE) {
-          await this.create(queueItem.prescription); // Maybe reuse the same queueItem? Not sure if it affects
+          await this.create(queueItem.prescription); // Maybe reuse the same queueItem? Not sure if it affects. TODO: Add TX support
           console.log(
             'Created node for prescription',
             queueItem.prescription.id,
@@ -383,14 +385,14 @@ export class PrescriptionsService {
   @Cron(CronExpression.EVERY_MINUTE)
   async processQueue() {
     if (this.isQueueProcessing || process.env.DISABLE_BLOCKCHAIN) {
-      console.log('Queue is already processing');
+      console.log('Prescription queue is already processing');
       return;
     }
     this.isQueueProcessing = true;
 
     await this.regenerateTransactions();
 
-    console.log('Processing queue');
+    console.log('Processing prescription queue');
 
     await this.processPendingTransactions();
 

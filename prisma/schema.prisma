@@ -58,12 +58,12 @@ model Patient {
 }
 
 model Doctor {
-  id                 Int            @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
   license            String
-  user               User           @relation(fields: [userId], references: [id])
-  userId             Int            @unique
+  user               User             @relation(fields: [userId], references: [id])
+  userId             Int              @unique
   specialtyId        Int
-  specialty          Specialty      @relation(fields: [specialtyId], references: [id])
+  specialty          Specialty        @relation(fields: [specialtyId], references: [id])
   prescriptions      Prescription[]
   patients           Patient[]
   doctorNodes        DoctorNode[]
@@ -72,6 +72,7 @@ model Doctor {
   privateKey         String
   salt               String
   iv                 String
+  DoctorNodeQueue    DoctorNodeQueue?
 }
 
 model Specialty {
@@ -81,20 +82,20 @@ model Specialty {
 }
 
 model Prescription {
-  id                      Int                      @id @default(autoincrement())
-  presentationId          Int
-  presentation            Presentation             @relation(fields: [presentationId], references: [id])
-  indication              String
-  patient                 Patient                  @relation(fields: [patientId], references: [id])
-  patientId               Int
-  doctor                  Doctor                   @relation(fields: [doctorId], references: [id])
-  doctorId                Int
-  quantity                Int
-  emitedAt                DateTime
-  prescriptionNodes       PrescriptionNode[]
-  signature               String
-  used                    Boolean                  @default(false)
-  prescriptionNodeQueue   PrescriptionNodeQueue?
+  id                    Int                    @id @default(autoincrement())
+  presentationId        Int
+  presentation          Presentation           @relation(fields: [presentationId], references: [id])
+  indication            String
+  patient               Patient                @relation(fields: [patientId], references: [id])
+  patientId             Int
+  doctor                Doctor                 @relation(fields: [doctorId], references: [id])
+  doctorId              Int
+  quantity              Int
+  emitedAt              DateTime
+  prescriptionNodes     PrescriptionNode[]
+  signature             String
+  used                  Boolean                @default(false)
+  prescriptionNodeQueue PrescriptionNodeQueue?
 }
 
 model Pharmacist {
@@ -165,6 +166,14 @@ model PrescriptionNodeQueue {
   prescription    Prescription @relation(fields: [prescriptionId], references: [id])
   action          QueueAction
   isRegeneration  Boolean      @default(false)
+}
+
+model DoctorNodeQueue {
+  id              Int     @id @default(autoincrement())
+  transactionHash String?
+  doctorId        Int     @unique
+  doctor          Doctor  @relation(fields: [doctorId], references: [id])
+  isRegeneration  Boolean @default(false)
 }
 
 enum QueueAction {
