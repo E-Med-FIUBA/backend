@@ -20,7 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "psql-up": "docker compose -f db/docker-compose-db.yaml up -d",
     "psql-down": "docker compose -f db/docker-compose-db.yaml down",
-    "cfix": "npm run format && npm run lint"
+    "cfix": "npm run format && npm run lint",
+    "seed": "find prisma/seeders -name '*.ts' -exec ts-node {} \\;"
   },
   "dependencies": {
     "@firebase/auth": "^1.7.5",

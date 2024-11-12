@@ -19,6 +19,7 @@ import { PatientlessPrescriptionDTO } from './dto/patientless-prescription.dto';
 import { PatientsService } from '../patients/patients.service';
 import { DoctorGuard } from 'src/auth/guards/doctor.guard';
 import { PharmacistGuard } from 'src/auth/guards/pharmacist.guard';
+import { ReqUser } from 'src/utils/req_user';
 
 @ApiTags('prescriptions')
 @Controller('prescriptions')
@@ -68,6 +69,7 @@ export class PrescriptionsController {
       emitedAt: new Date(),
       doctorId,
       used: false,
+      pharmacistId: null
     });
 
     this.mailingService.sendPrescription(
@@ -108,6 +110,7 @@ export class PrescriptionsController {
       emitedAt: new Date(),
       doctorId,
       used: false,
+      pharmacistId: null
     });
 
     this.mailingService.sendPrescription(
@@ -121,7 +124,17 @@ export class PrescriptionsController {
 
   @Post(':id/use')
   @UseGuards(PharmacistGuard)
-  markAsUsed(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
-    return this.prescriptionsService.markAsUsed(id);
+  markAsUsed(@Param('id', ParseIntPipe) id: number, @Req() req: ReqUser): Promise<Prescription> {
+    return this.prescriptionsService.markAsUsed(id, req.user!.pharmacist.id);
+  }
+
+  @Get('used')
+  @UseGuards(PharmacistGuard)
+  findAllUsed(@Req() req): Promise<Prescription[]> {
+    const pharmacistId = req.user?.pharmacist?.id;
+    if (!pharmacistId) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+    return this.prescriptionsService.findAllByPharmacist(pharmacistId);
   }
 }

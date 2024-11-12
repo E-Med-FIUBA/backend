@@ -1,3 +1,4 @@
-import { User } from "@prisma/client";
+import { Doctor, Pharmacist, User } from "@prisma/client";
 
-export type ReqUser = Request & { user: User };
+type ExtendedUser = User & { pharmacist?: Pharmacist, doctor?: Doctor };
+export type ReqUser = Request & { user: ExtendedUser };

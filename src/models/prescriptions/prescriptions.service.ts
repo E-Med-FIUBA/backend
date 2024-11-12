@@ -14,13 +14,14 @@ import { SignatureService } from 'src/signature/signature.service';
 
 @Injectable()
 export class PrescriptionsService {
+
   constructor(
     private prisma: PrismaService,
     private doctorsTreeService: DoctorsTreeService,
     private prescriptionsTreeService: PrescriptionsTreeService,
     private contractService: ContractService,
     private signatureService: SignatureService,
-  ) {}
+  ) { }
 
   async create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
@@ -140,7 +141,7 @@ export class PrescriptionsService {
     });
   }
 
-  markAsUsed(id: number) {
+  markAsUsed(id: number, pharmacistId: number) {
     return this.prisma.$transaction(
       async (tx) => {
         const updatedPrescription = await tx.prescription.update({
@@ -149,6 +150,7 @@ export class PrescriptionsService {
           },
           data: {
             used: true,
+            pharmacistId
           },
         });
 
@@ -218,5 +220,25 @@ export class PrescriptionsService {
       throw new BadRequestException('Prescripcion invalida');
     }
     return prescription;
+  }
+
+  findAllByPharmacist(pharmacistId: number) {
+    return this.prisma.prescription.findMany({
+      where: {
+        pharmacistId,
+      },
+      include: {
+        presentation: {
+          include: {
+            drug: true,
+          },
+        },
+        patient: {
+          include: {
+            insuranceCompany: true,
+          },
+        },
+      },
+    });
   }
 }
