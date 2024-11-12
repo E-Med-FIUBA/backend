@@ -14,8 +14,6 @@ import { MailingModule } from 'src/mailing/mailing.module';
 import { PatientsModule } from '../patients/patients.module';
 import { PatientsService } from '../patients/patients.service';
 import { SignatureModule } from 'src/signature/signature.module';
-import { PrescriptionStagingTreeModule } from '../prescription-staging-tree/prescription-staging-tree.module';
-import { PrescriptionStagingTreeService } from '../prescription-staging-tree/prescription-staging-tree.service';
 
 @Module({
   imports: [
@@ -29,7 +27,6 @@ import { PrescriptionStagingTreeService } from '../prescription-staging-tree/pre
     PatientsModule,
     MailingModule,
     SignatureModule,
-    PrescriptionStagingTreeModule,
   ],
   controllers: [PrescriptionsController],
   providers: [
@@ -37,7 +34,6 @@ import { PrescriptionStagingTreeService } from '../prescription-staging-tree/pre
     ContractService,
     DoctorsTreeService,
     PrescriptionsTreeService,
-    PrescriptionStagingTreeService,
     PatientsService,
     PrismaService,
   ],

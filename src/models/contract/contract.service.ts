@@ -137,7 +137,7 @@ export class ContractService {
     const receipt = await provider.getTransactionReceipt(txHash);
 
     if (!receipt) {
-      return false;
+      return true;
     }
 
     return receipt.status === 0;

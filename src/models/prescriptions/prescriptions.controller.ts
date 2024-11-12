@@ -64,12 +64,6 @@ export class PrescriptionsController {
       used: false,
     });
 
-    this.mailingService.sendPrescription(
-      prescription.patient.email,
-      prescription.patient,
-      prescription.doctor,
-      prescription,
-    );
     return prescription;
   }
 

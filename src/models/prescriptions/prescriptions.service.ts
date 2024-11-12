@@ -16,7 +16,6 @@ import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescrip
 import { ContractService, Proof } from '../contract/contract.service';
 import { SignatureService } from 'src/signature/signature.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrescriptionStagingTreeService } from '../prescription-staging-tree/prescription-staging-tree.service';
 import { PrismaTransactionalClient } from 'utils/types';
 import { MailingService } from 'src/mailing/mailing.service';
 
@@ -28,7 +27,6 @@ export class PrescriptionsService {
     private prisma: PrismaService,
     private doctorsTreeService: DoctorsTreeService,
     private prescriptionsTreeService: PrescriptionsTreeService,
-    private prescriptionsStagingTreeService: PrescriptionStagingTreeService,
     private contractService: ContractService,
     private mailingService: MailingService,
     private signatureService: SignatureService,
@@ -90,7 +88,7 @@ export class PrescriptionsService {
           tx,
         );
 
-        const proofData = await this.prescriptionsStagingTreeService.createNode(
+        const proofData = await this.prescriptionsTreeService.createNode(
           prescription,
           tx,
         );
@@ -178,7 +176,7 @@ export class PrescriptionsService {
           return updatedPrescription;
         }
 
-        const proofData = await this.prescriptionsStagingTreeService.markAsUsed(
+        const proofData = await this.prescriptionsTreeService.markAsUsed(
           updatedPrescription,
           tx,
         );
@@ -285,7 +283,7 @@ export class PrescriptionsService {
           },
         });
 
-        // Update staging tree
+        // Update tree
         if (queueItem.action === QueueAction.UPDATE) {
           await this.markAsUsed(queueItem.prescription.id); // Maybe reuse the same queueItem? Not sure if it affects
           console.log(
@@ -315,14 +313,6 @@ export class PrescriptionsService {
     });
 
     for (const queueItem of queue) {
-      // Check if transaction is confirmed
-      const isFinished = await this.contractService.isTransactionFinished(
-        queueItem.transactionHash,
-      );
-      if (!isFinished) {
-        break;
-      }
-
       // Check if tx failed. If so, revert staging tree
       const txFailed = await this.contractService.isTransactionFailed(
         queueItem.transactionHash,
@@ -336,6 +326,11 @@ export class PrescriptionsService {
           await tx.prescriptionNodeQueue.delete({
             where: {
               id: queueItem.id,
+            },
+          });
+          await tx.prescription.delete({
+            where: {
+              id: queueItem.prescription.id,
             },
           });
           // Change existing tasks to regenerate proofs tasks in the queue
@@ -358,6 +353,14 @@ export class PrescriptionsService {
         break;
       }
 
+      // Check if transaction is confirmed
+      const isFinished = await this.contractService.isTransactionFinished(
+        queueItem.transactionHash,
+      );
+      if (!isFinished) {
+        break;
+      }
+
       // Update main tree
       await this.prisma.$transaction(async (tx) => {
         await tx.prescriptionNodeQueue.delete({
@@ -365,29 +368,7 @@ export class PrescriptionsService {
             id: queueItem.id,
           },
         });
-
-        if (queueItem.action === QueueAction.UPDATE) {
-          await this.prescriptionsTreeService.markAsUsed(
-            queueItem.prescription,
-            tx,
-          );
-          console.log(
-            'Updated node for prescription',
-            queueItem.prescription.id,
-          );
-        } else if (queueItem.action === QueueAction.CREATE) {
-          await this.prescriptionsTreeService.createNode(
-            queueItem.prescription,
-            tx,
-          );
-          console.log(
-            'Created node for prescription',
-            queueItem.prescription.id,
-          );
-          this.sendPrescription(queueItem.prescription.id);
-        } else {
-          console.error('Unknown queue action', queueItem.action);
-        }
+        this.sendPrescription(queueItem.prescription.id);
       });
     }
     this.isQueueProcessing = false;
@@ -400,15 +381,12 @@ export class PrescriptionsService {
     itemsToRevert.reverse();
     for (const item of itemsToRevert) {
       if (item.action === QueueAction.UPDATE) {
-        await this.prescriptionsStagingTreeService.markAsUnused(
+        await this.prescriptionsTreeService.markAsUnused(
           item.prescriptionId,
           tx,
         );
       } else if (item.action === QueueAction.CREATE) {
-        await this.prescriptionsStagingTreeService.deleteNode(
-          item.prescriptionId,
-          tx,
-        );
+        await this.prescriptionsTreeService.deleteNode(item.prescriptionId, tx);
       } else {
         console.error('Unknown queue action', item.action);
       }

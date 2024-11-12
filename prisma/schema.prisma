@@ -94,7 +94,6 @@ model Prescription {
   prescriptionNodes       PrescriptionNode[]
   signature               String
   used                    Boolean                  @default(false)
-  prescriptionNodeStaging PrescriptionNodeStaging?
   prescriptionNodeQueue   PrescriptionNodeQueue?
 }
 
@@ -159,23 +158,9 @@ enum Sex {
   OTHER
 }
 
-model PrescriptionNodeStaging {
-  id           Int                       @id @default(autoincrement())
-  parent_id    Int?
-  parent       PrescriptionNodeStaging?  @relation("ParentChildren", fields: [parent_id], references: [id])
-  children     PrescriptionNodeStaging[] @relation("ParentChildren")
-  side         ChildSide?
-  hash         String
-  key          Int?                      @unique
-  prescription Prescription?             @relation(fields: [key], references: [id])
-
-  // Unique constraint for parent_id and side
-  @@unique(name: "unique_parent_side", [parent_id, side])
-}
-
 model PrescriptionNodeQueue {
   id              Int          @id @default(autoincrement())
-  transactionHash String
+  transactionHash String?
   prescriptionId  Int          @unique
   prescription    Prescription @relation(fields: [prescriptionId], references: [id])
   action          QueueAction
