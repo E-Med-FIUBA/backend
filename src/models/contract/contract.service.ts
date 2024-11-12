@@ -120,16 +120,26 @@ export class ContractService {
       },
     );
 
-    return txPrescriptionUsed.wait(REQUIRED_REPLIES);
+    return txPrescriptionUsed.hash;
   }
 
-  async isTransactionConfirmed(txHash: string) {
+  async isTransactionFinished(txHash: string) {
     const receipt = await provider.getTransactionReceipt(txHash);
 
     if (!receipt) {
       return false;
     }
 
-    return receipt.status === 1;
+    return !!receipt;
+  }
+
+  async isTransactionFailed(txHash: string) {
+    const receipt = await provider.getTransactionReceipt(txHash);
+
+    if (!receipt) {
+      return false;
+    }
+
+    return receipt.status === 0;
   }
 }

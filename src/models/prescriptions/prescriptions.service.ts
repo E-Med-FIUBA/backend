@@ -4,7 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { Prescription } from '@prisma/client';
+import {
+  Prescription,
+  PrescriptionNodeQueue,
+  QueueAction,
+} from '@prisma/client';
 import { poseidon3 } from 'poseidon-lite';
 import { groth16 } from 'snarkjs';
 import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
@@ -13,6 +17,8 @@ import { ContractService, Proof } from '../contract/contract.service';
 import { SignatureService } from 'src/signature/signature.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrescriptionStagingTreeService } from '../prescription-staging-tree/prescription-staging-tree.service';
+import { PrismaTransactionalClient } from 'utils/types';
+import { MailingService } from 'src/mailing/mailing.service';
 
 @Injectable()
 export class PrescriptionsService {
@@ -24,6 +30,7 @@ export class PrescriptionsService {
     private prescriptionsTreeService: PrescriptionsTreeService,
     private prescriptionsStagingTreeService: PrescriptionStagingTreeService,
     private contractService: ContractService,
+    private mailingService: MailingService,
     private signatureService: SignatureService,
   ) {}
 
@@ -108,6 +115,7 @@ export class PrescriptionsService {
         await tx.prescriptionNodeQueue.create({
           data: {
             transactionHash: txHash,
+            action: QueueAction.CREATE,
             prescription: {
               connect: {
                 id: prescription.id,
@@ -181,10 +189,22 @@ export class PrescriptionsService {
           'validium/update_circuit_final.zkey',
         );
 
-        await this.contractService.updatePrescriptionUsed(
+        const txHash = await this.contractService.updatePrescriptionUsed(
           proofData.newRoot,
           proof,
         );
+
+        await tx.prescriptionNodeQueue.create({
+          data: {
+            transactionHash: txHash,
+            action: QueueAction.UPDATE,
+            prescription: {
+              connect: {
+                id: updatedPrescription.id,
+              },
+            },
+          },
+        });
 
         return updatedPrescription;
       },
@@ -234,12 +254,55 @@ export class PrescriptionsService {
     return prescription;
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async processQueue() {
-    if (this.isQueueProcessing) {
+    if (this.isQueueProcessing || process.env.DISABLE_BLOCKCHAIN) {
+      console.log('Queue is already processing');
       return;
     }
     this.isQueueProcessing = true;
+
+    console.log('Processing queue');
+
+    const regenerationQueue = await this.prisma.prescriptionNodeQueue.findMany({
+      where: {
+        isRegeneration: true,
+      },
+      include: {
+        prescription: true,
+      },
+      orderBy: {
+        id: 'asc',
+      },
+      take: 100,
+    });
+
+    for (const queueItem of regenerationQueue) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.prescriptionNodeQueue.delete({
+          where: {
+            id: queueItem.id,
+          },
+        });
+
+        // Update staging tree
+        if (queueItem.action === QueueAction.UPDATE) {
+          await this.markAsUsed(queueItem.prescription.id); // Maybe reuse the same queueItem? Not sure if it affects
+          console.log(
+            'Updated node for prescription',
+            queueItem.prescription.id,
+          );
+        } else if (queueItem.action === QueueAction.CREATE) {
+          await this.create(queueItem.prescription); // Maybe reuse the same queueItem? Not sure if it affects
+          console.log(
+            'Created node for prescription',
+            queueItem.prescription.id,
+          );
+        } else {
+          console.error('Unknown queue action', queueItem.action);
+        }
+      });
+    }
 
     const queue = await this.prisma.prescriptionNodeQueue.findMany({
       include: {
@@ -253,18 +316,49 @@ export class PrescriptionsService {
 
     for (const queueItem of queue) {
       // Check if transaction is confirmed
-      const isConfirmed = await this.contractService.isTransactionConfirmed(
+      const isFinished = await this.contractService.isTransactionFinished(
         queueItem.transactionHash,
       );
-
-      if (!isConfirmed) {
+      if (!isFinished) {
         break;
       }
 
-      // Check if tx failed --> if so, revert staging tree
+      // Check if tx failed. If so, revert staging tree
+      const txFailed = await this.contractService.isTransactionFailed(
+        queueItem.transactionHash,
+      );
+      if (txFailed) {
+        const itemsToRevert = queue.filter(
+          (item) => item.prescription.id >= queueItem.prescription.id,
+        );
+        await this.prisma.$transaction(async (tx) => {
+          await this.revertStagingFrom(itemsToRevert, tx);
+          await tx.prescriptionNodeQueue.delete({
+            where: {
+              id: queueItem.id,
+            },
+          });
+          // Change existing tasks to regenerate proofs tasks in the queue
+          await tx.prescriptionNodeQueue.updateMany({
+            where: {
+              id: {
+                gt: queueItem.id,
+              },
+            },
+            data: {
+              transactionHash: null,
+              isRegeneration: true,
+            },
+          });
+        });
+        console.log(
+          'Reverted node for prescription',
+          queueItem.prescription.id,
+        );
+        break;
+      }
 
-      // Remove from queue and update prescription merkle tree
-
+      // Update main tree
       await this.prisma.$transaction(async (tx) => {
         await tx.prescriptionNodeQueue.delete({
           where: {
@@ -272,15 +366,87 @@ export class PrescriptionsService {
           },
         });
 
-        // TODO: Update prescription merkle tree according to "action" field
-        await this.prescriptionsTreeService.createNode(
-          queueItem.prescription,
-          tx,
-        );
+        if (queueItem.action === QueueAction.UPDATE) {
+          console.log(
+            'Updated node for prescription',
+            queueItem.prescription.id,
+          );
+          await this.prescriptionsTreeService.markAsUsed(
+            queueItem.prescription,
+            tx,
+          );
+          console.log(
+            'Updated node for prescription',
+            queueItem.prescription.id,
+          );
+        } else if (queueItem.action === QueueAction.CREATE) {
+          console.log(
+            'Created node for prescription',
+            queueItem.prescription.id,
+          );
+          await this.prescriptionsTreeService.createNode(
+            queueItem.prescription,
+            tx,
+          );
+          console.log(
+            'Created node for prescription',
+            queueItem.prescription.id,
+          );
+          this.sendPrescription(queueItem.prescription.id);
+        } else {
+          console.error('Unknown queue action', queueItem.action);
+        }
       });
-
-      console.log('created node for prescription', queueItem.prescription.id);
     }
     this.isQueueProcessing = false;
+  }
+
+  private async revertStagingFrom(
+    itemsToRevert: PrescriptionNodeQueue[],
+    tx: PrismaTransactionalClient,
+  ) {
+    itemsToRevert.reverse();
+    for (const item of itemsToRevert) {
+      if (item.action === QueueAction.UPDATE) {
+        await this.prescriptionsStagingTreeService.markAsUnused(
+          item.prescriptionId,
+          tx,
+        );
+      } else if (item.action === QueueAction.CREATE) {
+        await this.prescriptionsStagingTreeService.deleteNode(
+          item.prescriptionId,
+          tx,
+        );
+      } else {
+        console.error('Unknown queue action', item.action);
+      }
+    }
+  }
+
+  private async sendPrescription(prescriptionId: number) {
+    const prescription = await this.prisma.prescription.findUnique({
+      where: {
+        id: prescriptionId,
+      },
+      include: {
+        patient: true,
+        doctor: {
+          include: {
+            user: true,
+          },
+        },
+        presentation: {
+          include: {
+            drug: true,
+          },
+        },
+      },
+    });
+
+    const doctor = prescription.doctor;
+    const patient = prescription.patient;
+    const email = patient.email;
+
+    this.mailingService.sendPrescription(email, patient, doctor, prescription);
   }
 }

@@ -31,7 +31,7 @@ export class PrescriptionStagingTreeService extends TreeService {
   ): Promise<UpdateProofGenerationData> {
     const oldRoot = await this.getRoot(tx);
 
-    const prescriptionNode = await tx.prescriptionNode.findFirst({
+    const prescriptionNode = await tx.prescriptionNodeStaging.findFirst({
       where: { prescription: { id: prescription.id } },
     });
 
@@ -49,7 +49,7 @@ export class PrescriptionStagingTreeService extends TreeService {
 
     const hashedValue = this.hashData({ ...prescription, used: true });
 
-    const updatedPrescriptionNode = await tx.prescriptionNode.update({
+    const updatedPrescriptionNode = await tx.prescriptionNodeStaging.update({
       where: { id: prescriptionNode.id },
       data: {
         hash: this.hash1(prescriptionNode.key, hashedValue).toString(),
@@ -79,5 +79,68 @@ export class PrescriptionStagingTreeService extends TreeService {
       oldKey: oldNode.key,
       oldValue: this.hashData({ ...prescription, used: false }), // TODO: Check for another way of getting the old value
     };
+  }
+
+  async markAsUnused(
+    prescriptionId: number,
+    tx: PrismaTransactionalClient = this.prisma,
+  ) {
+    const prescriptionNode = await tx.prescriptionNodeStaging.findFirst({
+      where: { prescription: { id: prescriptionId } },
+      include: {
+        prescription: true,
+      },
+    });
+
+    if (!prescriptionNode) {
+      throw new NotFoundException(
+        `Prescription node for ${prescriptionId} not found`,
+      );
+    }
+
+    const hashedValue = this.hashData({
+      ...prescriptionNode.prescription,
+      used: false,
+    });
+
+    const updatedPrescriptionNode = await tx.prescriptionNodeStaging.update({
+      where: { id: prescriptionNode.id },
+      data: {
+        hash: this.hash1(prescriptionNode.key, hashedValue).toString(),
+      },
+      include: {
+        parent: true,
+      },
+    });
+
+    if (updatedPrescriptionNode.parent) {
+      await this.updateHashes(updatedPrescriptionNode.parent, tx);
+    }
+  }
+
+  async deleteNode(
+    prescriptionId: number,
+    tx: PrismaTransactionalClient = this.prisma,
+  ) {
+    const prescriptionNode = await tx.prescriptionNodeStaging.findFirst({
+      where: { prescription: { id: prescriptionId } },
+      include: {
+        parent: true,
+      },
+    });
+
+    if (!prescriptionNode) {
+      throw new NotFoundException(
+        `Prescription node for ${prescriptionId} not found`,
+      );
+    }
+
+    await tx.prescriptionNodeStaging.delete({
+      where: { id: prescriptionNode.id },
+    });
+
+    if (prescriptionNode.parent) {
+      await this.updateHashes(prescriptionNode.parent, tx);
+    }
   }
 }

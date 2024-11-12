@@ -179,6 +179,7 @@ model PrescriptionNodeQueue {
   prescriptionId  Int          @unique
   prescription    Prescription @relation(fields: [prescriptionId], references: [id])
   action          QueueAction
+  isRegeneration  Boolean      @default(false)
 }
 
 enum QueueAction {
