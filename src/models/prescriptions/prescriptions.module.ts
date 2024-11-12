@@ -26,7 +26,7 @@ import { SignatureModule } from 'src/signature/signature.module';
     ContractModule,
     PatientsModule,
     MailingModule,
-    SignatureModule
+    SignatureModule,
   ],
   controllers: [PrescriptionsController],
   providers: [
@@ -39,4 +39,4 @@ import { SignatureModule } from 'src/signature/signature.module';
   ],
   exports: [PrescriptionsService],
 })
-export class PrescriptionsModule { }
+export class PrescriptionsModule {}

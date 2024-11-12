@@ -3,8 +3,6 @@ import { ethers } from 'ethers';
 
 import * as ContractArtifact from 'contracts/RootManager.sol/RootManager.json';
 
-const REQUIRED_REPLIES = 2;
-
 const PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY || '';
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '';
 
@@ -67,7 +65,7 @@ export class ContractService {
         gasLimit: estimatedGasLimit,
       },
     );
-    return txDoctorCreate.wait(REQUIRED_REPLIES);
+    return txDoctorCreate.hash;
   }
 
   async updatePrescriptionsMerkleRoot(newRoot: bigint, proof: Proof) {
@@ -94,7 +92,7 @@ export class ContractService {
       },
     );
 
-    return txPrescriptionCreate.wait(REQUIRED_REPLIES);
+    return txPrescriptionCreate.hash;
   }
 
   async updatePrescriptionUsed(newRoot: bigint, proof: Proof) {
@@ -120,6 +118,26 @@ export class ContractService {
       },
     );
 
-    return txPrescriptionUsed.wait(REQUIRED_REPLIES);
+    return txPrescriptionUsed.hash;
+  }
+
+  async isTransactionFinished(txHash: string) {
+    const receipt = await provider.getTransactionReceipt(txHash);
+
+    if (!receipt) {
+      return false;
+    }
+
+    return !!receipt;
+  }
+
+  async isTransactionFailed(txHash: string) {
+    const receipt = await provider.getTransactionReceipt(txHash);
+
+    if (!receipt) {
+      return true;
+    }
+
+    return receipt.status === 0;
   }
 }

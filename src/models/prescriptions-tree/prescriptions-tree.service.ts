@@ -3,22 +3,10 @@ import { Prescription } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { poseidon7 } from 'poseidon-lite';
 import { splitKey, TreeService } from 'src/models/tree.service';
-import { PrismaTransactionalClient } from 'utils/types';
-
-interface UpdateProofGenerationData {
-  oldRoot: bigint;
-  newRoot: bigint;
-  siblings: bigint[];
-  oldKey: number;
-  oldValue: bigint;
-  key: number;
-  doctorId: number;
-  presentationId: number;
-  patientId: number;
-  quantity: number;
-  emitedAt: number;
-  [key: string]: any;
-}
+import {
+  PrismaTransactionalClient,
+  UpdateProofGenerationData,
+} from 'utils/types';
 
 @Injectable()
 export class PrescriptionsTreeService extends TreeService {
@@ -26,6 +14,7 @@ export class PrescriptionsTreeService extends TreeService {
     super('prescriptionNode', 'prescription', prisma);
   }
 
+  // TODO: Hash more data
   hashData = (prescription: Prescription) =>
     poseidon7([
       prescription.id,
@@ -91,5 +80,42 @@ export class PrescriptionsTreeService extends TreeService {
       oldKey: oldNode.key,
       oldValue: this.hashData({ ...prescription, used: false }), // TODO: Check for another way of getting the old value
     };
+  }
+
+  async markAsUnused(
+    prescriptionId: number,
+    tx: PrismaTransactionalClient = this.prisma,
+  ) {
+    const prescriptionNode = await tx.prescriptionNode.findFirst({
+      where: { prescription: { id: prescriptionId } },
+      include: {
+        prescription: true,
+      },
+    });
+
+    if (!prescriptionNode) {
+      throw new NotFoundException(
+        `Prescription node for ${prescriptionId} not found`,
+      );
+    }
+
+    const hashedValue = this.hashData({
+      ...prescriptionNode.prescription,
+      used: false,
+    });
+
+    const updatedPrescriptionNode = await tx.prescriptionNode.update({
+      where: { id: prescriptionNode.id },
+      data: {
+        hash: this.hash1(prescriptionNode.key, hashedValue).toString(),
+      },
+      include: {
+        parent: true,
+      },
+    });
+
+    if (updatedPrescriptionNode.parent) {
+      await this.updateHashes(updatedPrescriptionNode.parent, tx);
+    }
   }
 }

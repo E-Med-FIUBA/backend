@@ -2,6 +2,7 @@ import { ChildSide } from '@prisma/client';
 import { poseidon2, poseidon3 } from 'poseidon-lite';
 import { PrismaService } from '../prisma.service';
 import { PrismaTransactionalClient } from 'utils/types';
+import { NotFoundException } from '@nestjs/common';
 
 const keyLength = 4; // key length in bits - TODO: change this to a higher value. The number of available keys is 2^keyLength
 
@@ -343,5 +344,102 @@ export class TreeService {
         [this.entityName]: includeData,
       },
     });
+  }
+
+  async deleteNode(
+    prescriptionId: number,
+    tx: PrismaTransactionalClient = this.prisma,
+  ) {
+    let currentNode = await tx[this.nodeRepositoryName].findFirst({
+      where: { key: prescriptionId },
+    });
+
+    if (!currentNode) {
+      throw new NotFoundException(
+        `Prescription node for ${prescriptionId} not found`,
+      );
+    }
+
+    let sibling = await tx[this.nodeRepositoryName].findFirst({
+      where: {
+        parent_id: currentNode.parent_id,
+        id: { not: currentNode.id },
+      },
+    });
+
+    if (!sibling) {
+      // Find closest sibling
+      while (!sibling) {
+        await tx[this.nodeRepositoryName].delete({
+          where: { id: currentNode.id },
+        });
+
+        sibling = await tx[this.nodeRepositoryName].findFirst({
+          where: {
+            parent_id: currentNode.parent_id,
+            id: { not: currentNode.id },
+          },
+        });
+
+        currentNode = await tx[this.nodeRepositoryName].findFirst({
+          where: { id: currentNode.parent_id },
+        });
+
+        if (!currentNode) {
+          return;
+        }
+      }
+    }
+    // Delete node and sibling
+    await tx[this.nodeRepositoryName].delete({
+      where: { id: sibling.id },
+    });
+    await tx[this.nodeRepositoryName].delete({
+      where: { id: currentNode.id },
+    });
+
+    if (currentNode.parent_id) {
+      currentNode = await tx[this.nodeRepositoryName].update({
+        where: { id: currentNode.parent_id },
+        data: {
+          hash: sibling.hash,
+          key: sibling.key,
+        },
+      });
+    }
+
+    // Simplify tree
+    while (currentNode.parent_id) {
+      const parent = await tx[this.nodeRepositoryName].findFirst({
+        where: { id: currentNode.parent_id },
+        include: {
+          children: true,
+        },
+      });
+
+      if (parent.children.length == 2) {
+        await tx[this.nodeRepositoryName].update({
+          where: { id: currentNode.id },
+          data: {
+            hash: sibling.hash,
+            key: sibling.key,
+          },
+        });
+        break;
+      }
+
+      await tx[this.nodeRepositoryName].delete({
+        where: { id: currentNode.id },
+      });
+
+      currentNode = parent;
+    }
+
+    if (currentNode.parent_id) {
+      const parent = await tx[this.nodeRepositoryName].findFirst({
+        where: { id: currentNode.parent_id },
+      });
+      await this.updateHashes(parent, tx);
+    }
   }
 }

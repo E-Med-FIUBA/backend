@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  Post,
   Put,
   Req,
   UseGuards,
@@ -20,12 +19,12 @@ import { ReqUser } from 'src/utils/req_user';
 @Controller('drugs')
 @UseGuards(AuthGuard)
 export class DrugsController {
-  constructor(private drugsService: DrugsService) { }
+  constructor(private drugsService: DrugsService) {}
 
-  @Post()
-  create(@Body() data: DrugDTO) {
-    return this.drugsService.create(data);
-  }
+  // @Post()
+  // create(@Body() data: DrugDTO) {
+  //   return this.drugsService.create(data);
+  // }
 
   @Get()
   findAll() {

@@ -12,7 +12,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PrescriptionDTO } from './dto/prescription.dto';
-import { AuthGuard } from '../../auth/guards/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { MailingService } from 'src/mailing/mailing.service';
 import { PatientlessPrescriptionDTO } from './dto/patientless-prescription.dto';
@@ -23,13 +22,12 @@ import { ReqUser } from 'src/utils/req_user';
 
 @ApiTags('prescriptions')
 @Controller('prescriptions')
-
 export class PrescriptionsController {
   constructor(
     private prescriptionsService: PrescriptionsService,
     private patientsService: PatientsService,
     private mailingService: MailingService,
-  ) { }
+  ) {}
 
   @Get()
   @UseGuards(DoctorGuard)
@@ -69,15 +67,9 @@ export class PrescriptionsController {
       emitedAt: new Date(),
       doctorId,
       used: false,
-      pharmacistId: null
+      pharmacistId: null,
     });
 
-    this.mailingService.sendPrescription(
-      prescription.patient.email,
-      prescription.patient,
-      prescription.doctor,
-      prescription,
-    );
     return prescription;
   }
 
@@ -110,21 +102,18 @@ export class PrescriptionsController {
       emitedAt: new Date(),
       doctorId,
       used: false,
-      pharmacistId: null
+      pharmacistId: null,
     });
 
-    this.mailingService.sendPrescription(
-      patient.email,
-      patient,
-      prescription.doctor,
-      prescription,
-    );
     return prescription;
   }
 
   @Post(':id/use')
   @UseGuards(PharmacistGuard)
-  markAsUsed(@Param('id', ParseIntPipe) id: number, @Req() req: ReqUser): Promise<Prescription> {
+  markAsUsed(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: ReqUser,
+  ): Promise<Prescription> {
     return this.prescriptionsService.markAsUsed(id, req.user!.pharmacist.id);
   }
 

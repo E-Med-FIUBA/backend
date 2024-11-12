@@ -62,12 +62,12 @@ model Patient {
 }
 
 model Doctor {
-  id                 Int            @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
   license            String
-  user               User           @relation(fields: [userId], references: [id])
-  userId             Int            @unique
+  user               User             @relation(fields: [userId], references: [id])
+  userId             Int              @unique
   specialtyId        Int
-  specialty          Specialty      @relation(fields: [specialtyId], references: [id])
+  specialty          Specialty        @relation(fields: [specialtyId], references: [id])
   prescriptions      Prescription[]
   patients           Patient[]
   doctorNodes        DoctorNode[]
@@ -76,6 +76,7 @@ model Doctor {
   privateKey         String
   salt               String
   iv                 String
+  DoctorNodeQueue    DoctorNodeQueue?
 }
 
 model Specialty {
@@ -100,6 +101,7 @@ model Prescription {
   used              Boolean            @default(false)
   pharmacistId      Int?
   pharmacist        Pharmacist?        @relation(fields: [pharmacistId], references: [id])
+  prescriptionNodeQueue PrescriptionNodeQueue?
 }
 
 model Pharmacist {
@@ -162,4 +164,26 @@ enum Sex {
   MALE
   FEMALE
   OTHER
+}
+
+model PrescriptionNodeQueue {
+  id              Int          @id @default(autoincrement())
+  transactionHash String?
+  prescriptionId  Int          @unique
+  prescription    Prescription @relation(fields: [prescriptionId], references: [id])
+  action          QueueAction
+  isRegeneration  Boolean      @default(false)
+}
+
+model DoctorNodeQueue {
+  id              Int     @id @default(autoincrement())
+  transactionHash String?
+  doctorId        Int     @unique
+  doctor          Doctor  @relation(fields: [doctorId], references: [id])
+  isRegeneration  Boolean @default(false)
+}
+
+enum QueueAction {
+  CREATE
+  UPDATE
 }
