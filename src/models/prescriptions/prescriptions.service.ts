@@ -32,102 +32,109 @@ export class PrescriptionsService {
     private signatureService: SignatureService,
   ) {}
 
-  async create(data: Omit<Prescription, 'id'>) {
+  create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
-      async (tx) => {
-        const prescription = await tx.prescription.create({
-          data: {
-            emitedAt: data.emitedAt,
-            quantity: data.quantity,
-            presentationId: data.presentationId,
-            indication: data.indication,
-            doctorId: data.doctorId,
-            patientId: data.patientId,
-            signature: data.signature,
-          },
-          include: {
-            presentation: {
-              include: {
-                drug: true,
-              },
-            },
-            patient: {
-              include: {
-                insuranceCompany: true,
-              },
-            },
-            doctor: {
-              include: {
-                user: true,
-                specialty: true,
-              },
-            },
-          },
-        });
-
-        if (process.env.DISABLE_BLOCKCHAIN) {
-          return prescription;
-        }
-
-        const doctorRoot = await this.doctorsTreeService.getRoot(tx);
-        if (!doctorRoot) {
-          throw new Error('Doctor tree not initialized');
-        }
-
-        const doctor = await tx.doctor.findUnique({
-          where: {
-            id: data.doctorId,
-          },
-        });
-        if (!doctor) {
-          throw new NotFoundException('Doctor not found');
-        }
-
-        const doctorSiblings = await this.doctorsTreeService.getSiblings(
-          data.doctorId,
-          tx,
-        );
-
-        const proofData = await this.prescriptionsTreeService.createNode(
-          prescription,
-          tx,
-        );
-
-        const { proof }: { proof: Proof } = await groth16.fullProve(
-          {
-            ...proofData,
-            doctorRoot: BigInt(doctorRoot.hash),
-            doctorSiblings: doctorSiblings,
-            doctorKey: data.doctorId,
-            doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
-          },
-          'validium/prescription_validation.wasm',
-          'validium/prescription_circuit_final.zkey',
-        );
-
-        const txHash = await this.contractService.updatePrescriptionsMerkleRoot(
-          proofData.newRoot,
-          proof,
-        );
-
-        await tx.prescriptionNodeQueue.create({
-          data: {
-            transactionHash: txHash,
-            action: QueueAction.CREATE,
-            prescription: {
-              connect: {
-                id: prescription.id,
-              },
-            },
-          },
-        });
-
-        return prescription;
+      (tx) => {
+        return this.createAux(data, tx);
       },
       {
-        timeout: 60000,
+        timeout: 20000,
       },
     );
+  }
+
+  private async createAux(
+    data: Omit<Prescription, 'id'>,
+    tx: PrismaTransactionalClient = this.prisma,
+  ) {
+    const prescription = await tx.prescription.create({
+      data: {
+        emitedAt: data.emitedAt,
+        quantity: data.quantity,
+        presentationId: data.presentationId,
+        indication: data.indication,
+        doctorId: data.doctorId,
+        patientId: data.patientId,
+        signature: data.signature,
+      },
+      include: {
+        presentation: {
+          include: {
+            drug: true,
+          },
+        },
+        patient: {
+          include: {
+            insuranceCompany: true,
+          },
+        },
+        doctor: {
+          include: {
+            user: true,
+            specialty: true,
+          },
+        },
+      },
+    });
+
+    if (process.env.DISABLE_BLOCKCHAIN) {
+      return prescription;
+    }
+
+    const doctorRoot = await this.doctorsTreeService.getRoot(tx);
+    if (!doctorRoot) {
+      throw new Error('Doctor tree not initialized');
+    }
+
+    const doctor = await tx.doctor.findUnique({
+      where: {
+        id: data.doctorId,
+      },
+    });
+    if (!doctor) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    const doctorSiblings = await this.doctorsTreeService.getSiblings(
+      data.doctorId,
+      tx,
+    );
+
+    const proofData = await this.prescriptionsTreeService.createNode(
+      prescription,
+      tx,
+    );
+
+    const { proof }: { proof: Proof } = await groth16.fullProve(
+      {
+        ...proofData,
+        doctorRoot: BigInt(doctorRoot.hash),
+        doctorSiblings: doctorSiblings,
+        doctorKey: data.doctorId,
+        doctorValue: poseidon3([doctor.id, doctor.license, doctor.userId]),
+      },
+      'validium/prescription_validation.wasm',
+      'validium/prescription_circuit_final.zkey',
+    );
+
+    const txHash = await this.contractService.updatePrescriptionsMerkleRoot(
+      proofData.newRoot,
+      proof,
+    );
+
+    await tx.prescriptionNodeQueue.create({
+      data: {
+        transactionHash: txHash,
+        action: QueueAction.CREATE,
+        prescription: {
+          connect: {
+            id: prescription.id,
+          },
+        },
+      },
+    });
+
+    return prescription;
   }
 
   findAll() {
@@ -170,54 +177,62 @@ export class PrescriptionsService {
 
     return this.prisma.$transaction(
       async (tx) => {
-        const updatedPrescription = await tx.prescription.update({
-          where: {
-            id,
-          },
-          data: {
-            used: true,
-            pharmacistId,
-          },
-        });
-
-        if (process.env.DISABLE_BLOCKCHAIN) {
-          return updatedPrescription;
-        }
-
-        const proofData = await this.prescriptionsTreeService.markAsUsed(
-          updatedPrescription,
-          tx,
-        );
-
-        const { proof }: { proof: Proof } = await groth16.fullProve(
-          proofData,
-          'validium/update_validation.wasm',
-          'validium/update_circuit_final.zkey',
-        );
-
-        const txHash = await this.contractService.updatePrescriptionUsed(
-          proofData.newRoot,
-          proof,
-        );
-
-        await tx.prescriptionNodeQueue.create({
-          data: {
-            transactionHash: txHash,
-            action: QueueAction.UPDATE,
-            prescription: {
-              connect: {
-                id: updatedPrescription.id,
-              },
-            },
-          },
-        });
-
-        return updatedPrescription;
+        return this.markAsUsedAux(id, pharmacistId, tx);
       },
       {
-        timeout: 60000,
+        timeout: 20000,
       },
     );
+  }
+
+  private async markAsUsedAux(
+    id: number,
+    pharmacistId: number,
+    tx: PrismaTransactionalClient = this.prisma,
+  ) {
+    const updatedPrescription = await tx.prescription.update({
+      where: {
+        id,
+      },
+      data: {
+        used: true,
+        pharmacistId,
+      },
+    });
+
+    if (process.env.DISABLE_BLOCKCHAIN) {
+      return updatedPrescription;
+    }
+
+    const proofData = await this.prescriptionsTreeService.markAsUsed(
+      updatedPrescription,
+      tx,
+    );
+
+    const { proof }: { proof: Proof } = await groth16.fullProve(
+      proofData,
+      'validium/update_validation.wasm',
+      'validium/update_circuit_final.zkey',
+    );
+
+    const txHash = await this.contractService.updatePrescriptionUsed(
+      proofData.newRoot,
+      proof,
+    );
+
+    await tx.prescriptionNodeQueue.create({
+      data: {
+        transactionHash: txHash,
+        action: QueueAction.UPDATE,
+        prescription: {
+          connect: {
+            id: updatedPrescription.id,
+          },
+        },
+      },
+    });
+
+    return updatedPrescription;
   }
 
   async verify(id: number): Promise<Prescription> {
@@ -320,7 +335,7 @@ export class PrescriptionsService {
             queueItem.prescription.id,
           );
         } else if (queueItem.action === QueueAction.CREATE) {
-          await this.create(queueItem.prescription); // Maybe reuse the same queueItem? Not sure if it affects. TODO: Add TX support
+          await this.createAux(queueItem.prescription, tx); // Maybe reuse the same queueItem? Not sure if it affects. TODO: Add TX support
           console.log(
             'Created node for prescription',
             queueItem.prescription.id,
