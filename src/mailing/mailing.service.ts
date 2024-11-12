@@ -23,6 +23,7 @@ const sexMap = {
 export class MailingService {
   private transporter: Transporter;
   private prescriptionTemplate: HandlebarsTemplateDelegate<any>;
+  private welcomeTemplate: HandlebarsTemplateDelegate<any>;
 
   constructor() {
     this.transporter = createTransport({
@@ -43,6 +44,7 @@ export class MailingService {
     });
 
     this.prescriptionTemplate = this.loadTemplate('prescription.hbs');
+    this.welcomeTemplate = this.loadTemplate('welcome.hbs');
   }
 
   private loadTemplate(templateName: string): HandlebarsTemplateDelegate<any> {
@@ -105,5 +107,20 @@ export class MailingService {
         }
       },
     );
+  }
+
+  public async sendDoctorWelcomeMail(
+    to: string,
+    doctor: Doctor & { user: User },
+  ): Promise<void> {
+    return this.transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to,
+      subject: `Bienvenido/a ${doctor.user.name} ${doctor.user.lastName}`,
+      html: this.welcomeTemplate({
+        doctor,
+        websiteLink: process.env.FRONT_END_URL,
+      }),
+    });
   }
 }

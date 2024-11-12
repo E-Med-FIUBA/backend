@@ -9,6 +9,7 @@ import { PrismaTransactionalClient } from 'utils/types';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
 import { DoctorData, SignatureService } from 'src/signature/signature.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { MailingService } from 'src/mailing/mailing.service';
 
 @Injectable()
 export class DoctorsService {
@@ -20,6 +21,7 @@ export class DoctorsService {
     private doctorsTreeService: DoctorsTreeService,
     private contractService: ContractService,
     private signatureService: SignatureService,
+    private mailingService: MailingService,
   ) {}
 
   async create(data: DoctorData, tx: PrismaTransactionalClient = this.prisma) {
@@ -224,7 +226,11 @@ export class DoctorsService {
   async processPendingTransactions() {
     const queue = await this.prisma.doctorNodeQueue.findMany({
       include: {
-        doctor: true,
+        doctor: {
+          include: {
+            user: true,
+          },
+        },
       },
       orderBy: {
         id: 'asc',
@@ -259,6 +265,15 @@ export class DoctorsService {
           },
         });
       });
+      const email = queueItem.doctor.user.email;
+      try {
+        await this.mailingService.sendDoctorWelcomeMail(
+          email,
+          queueItem.doctor,
+        );
+      } catch (e) {
+        console.error('Error sending welcome mail to doctor', email, e);
+      }
     }
   }
 
