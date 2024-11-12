@@ -5,7 +5,8 @@ import { Drug } from '@prisma/client';
 
 @Injectable()
 export class DrugsService {
-  constructor(private prismaService: PrismaService) {}
+
+  constructor(private prismaService: PrismaService) { }
 
   create(data: Omit<Drug, 'id'>) {
     return this.prismaService.drug.create({
@@ -44,6 +45,24 @@ export class DrugsService {
     return this.prismaService.drug.delete({
       where: {
         id: id,
+      },
+    });
+  }
+
+  // Get drug usage metrics for a pharmacist
+  getMetrics(pharmacistId: number) {
+    return this.prismaService.drug.findMany({
+      select: {
+        name: true,
+        presentations: {
+          select: {
+            prescriptions: {
+              where: {
+                pharmacistId: pharmacistId,
+              },
+            },
+          },
+        },
       },
     });
   }

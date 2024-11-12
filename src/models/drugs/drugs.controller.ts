@@ -4,14 +4,16 @@ import {
   Delete,
   Get,
   Param,
-  Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { DrugDTO } from './dto/drug.dto';
 import { DrugsService } from './drugs.service';
-import { AuthGuard } from '../../auth/auth.guard';
+import { AuthGuard } from '../../auth/guards/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
+import { PharmacistGuard } from 'src/auth/guards/pharmacist.guard';
+import { ReqUser } from 'src/utils/req_user';
 
 @ApiTags('drugs')
 @Controller('drugs')
@@ -19,10 +21,10 @@ import { ApiTags } from '@nestjs/swagger';
 export class DrugsController {
   constructor(private drugsService: DrugsService) {}
 
-  @Post()
-  create(@Body() data: DrugDTO) {
-    return this.drugsService.create(data);
-  }
+  // @Post()
+  // create(@Body() data: DrugDTO) {
+  //   return this.drugsService.create(data);
+  // }
 
   @Get()
   findAll() {
@@ -42,5 +44,11 @@ export class DrugsController {
   @Delete(':id')
   remove(@Param('id') id: number) {
     return this.drugsService.remove(+id);
+  }
+
+  @Get('metrics')
+  @UseGuards(PharmacistGuard)
+  getMetrics(@Req() req: ReqUser) {
+    return this.drugsService.getMetrics(req.user.pharmacist.id);
   }
 }

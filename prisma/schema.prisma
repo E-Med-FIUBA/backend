@@ -15,10 +15,14 @@ datasource db {
 }
 
 model Drug {
-  id            Int            @id @default(autoincrement())
-  name          String
-  description   String
-  presentations Presentation[]
+  id              Int            @id @default(autoincrement())
+  name            String
+  description     String
+  administration  String
+  commercial_name String
+  atc             String
+  form            String
+  presentations   Presentation[]
 }
 
 model Presentation {
@@ -82,27 +86,30 @@ model Specialty {
 }
 
 model Prescription {
-  id                    Int                    @id @default(autoincrement())
-  presentationId        Int
-  presentation          Presentation           @relation(fields: [presentationId], references: [id])
-  indication            String
-  patient               Patient                @relation(fields: [patientId], references: [id])
-  patientId             Int
-  doctor                Doctor                 @relation(fields: [doctorId], references: [id])
-  doctorId              Int
-  quantity              Int
-  emitedAt              DateTime
-  prescriptionNodes     PrescriptionNode[]
-  signature             String
-  used                  Boolean                @default(false)
+  id                Int                @id @default(autoincrement())
+  presentationId    Int
+  presentation      Presentation       @relation(fields: [presentationId], references: [id])
+  indication        String
+  patient           Patient            @relation(fields: [patientId], references: [id])
+  patientId         Int
+  doctor            Doctor             @relation(fields: [doctorId], references: [id])
+  doctorId          Int
+  quantity          Int
+  emitedAt          DateTime
+  prescriptionNodes PrescriptionNode[]
+  signature         String
+  used              Boolean            @default(false)
+  pharmacistId      Int?
+  pharmacist        Pharmacist?        @relation(fields: [pharmacistId], references: [id])
   prescriptionNodeQueue PrescriptionNodeQueue?
 }
 
 model Pharmacist {
-  id      Int    @id @default(autoincrement())
-  license String
-  user    User   @relation(fields: [userId], references: [id])
-  userId  Int    @unique
+  id            Int            @id @default(autoincrement())
+  license       String
+  user          User           @relation(fields: [userId], references: [id])
+  userId        Int            @unique
+  prescriptions Prescription[]
 }
 
 enum ChildSide {

@@ -12,20 +12,20 @@ import {
 } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { PatientDTO } from './dto/patient.dto';
-import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { Patient } from '@prisma/client';
 import { PatientNotesService } from '../patient-notes/patient-notes.service';
 import { CreatePatientNoteDto } from '../patient-notes/dto/create-patient-note.dto';
+import { DoctorGuard } from 'src/auth/guards/doctor.guard';
 
 @ApiTags('patients')
 @Controller('patients')
-@UseGuards(AuthGuard)
+@UseGuards(DoctorGuard)
 export class PatientsController {
   constructor(
     private patientsService: PatientsService,
     private patientNotesService: PatientNotesService,
-  ) {}
+  ) { }
 
   @Post()
   create(@Req() req, @Body() data: PatientDTO) {

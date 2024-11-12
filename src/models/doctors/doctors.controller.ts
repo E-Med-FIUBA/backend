@@ -10,20 +10,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { DoctorsService } from './doctors.service';
-import { AuthGuard } from '../../auth/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
-import { User } from '@prisma/client';
 import { SignatureService } from 'src/signature/signature.service';
+import { DoctorGuard } from 'src/auth/guards/doctor.guard';
+import { ReqUser } from 'src/utils/req_user';
 
 @ApiTags('doctors')
 @Controller('doctors')
-@UseGuards(AuthGuard)
+@UseGuards(DoctorGuard)
 export class DoctorsController {
   constructor(private doctorsService: DoctorsService, private signatureService: SignatureService) { }
 
   @Get('private-key')
-  public async getPrivateKey(@Req() req: Request & { user: User }): Promise<{ privateKey: string }> {
+  public async getPrivateKey(@Req() req: ReqUser): Promise<{ privateKey: string }> {
     const user = req.user;
 
     const doctor = await this.doctorsService.getDoctorByUserId(user.id);

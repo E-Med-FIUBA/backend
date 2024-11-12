@@ -6,8 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
-import { firebaseAdmin } from '../firebase/firebase';
-import { UsersService } from '../models/users/users.service';
+import { firebaseAdmin } from '../../firebase/firebase';
+import { UsersService } from '../../models/users/users.service';
 
 const logger = new Logger();
 
@@ -24,6 +24,13 @@ export class AuthGuard implements CanActivate {
       const user = await this.usersService.findByUIDIncludeData(
         decodedToken.uid,
       );
+
+      if (!user) {
+        throw new UnauthorizedException({
+          message: 'User not found',
+        });
+      }
+
       request.user = user;
       return true;
     } catch (err) {

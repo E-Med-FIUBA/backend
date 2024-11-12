@@ -145,7 +145,11 @@ export class PrescriptionsService {
             drug: true,
           },
         },
-        patient: true,
+        patient: {
+          include: {
+            insuranceCompany: true,
+          },
+        },
       },
     });
   }
@@ -158,7 +162,7 @@ export class PrescriptionsService {
     });
   }
 
-  markAsUsed(id: number) {
+  markAsUsed(id: number, pharmacistId: number) {
     if (!this.isActivePrescription(id)) {
       throw new BadRequestException('Prescription is being processed');
     }
@@ -171,6 +175,7 @@ export class PrescriptionsService {
           },
           data: {
             used: true,
+            pharmacistId,
           },
         });
 
@@ -260,6 +265,26 @@ export class PrescriptionsService {
     return prescription;
   }
 
+  findAllByPharmacist(pharmacistId: number) {
+    return this.prisma.prescription.findMany({
+      where: {
+        pharmacistId,
+      },
+      include: {
+        presentation: {
+          include: {
+            drug: true,
+          },
+        },
+        patient: {
+          include: {
+            insuranceCompany: true,
+          },
+        },
+      },
+    });
+  }
+
   private async regenerateTransactions() {
     const regenerationQueue = await this.prisma.prescriptionNodeQueue.findMany({
       where: {
@@ -284,7 +309,10 @@ export class PrescriptionsService {
 
         // Update tree
         if (queueItem.action === QueueAction.UPDATE) {
-          await this.markAsUsed(queueItem.prescription.id); // Maybe reuse the same queueItem? Not sure if it affects. TODO: Add TX support
+          await this.markAsUsed(
+            queueItem.prescription.id,
+            queueItem.prescription.pharmacistId,
+          ); // Maybe reuse the same queueItem? Not sure if it affects. TODO: Add TX support
           console.log(
             'Updated node for prescription',
             queueItem.prescription.id,
