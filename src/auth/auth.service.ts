@@ -49,8 +49,8 @@ export class AuthService {
   async register(user: UserRegisterDTO, role: Role): Promise<Token> {
     try {
       switch (role) {
-        case Role.Doctor:
-          return await this.registerDoctor(user as DoctorRegisterDTO);
+        // case Role.Doctor:
+        //   return await this.registerDoctor(user as DoctorRegisterDTO);
         case Role.Pharmacist:
           return await this.registerPharmacist(user as PharmacistRegisterDTO);
         default:
@@ -116,7 +116,7 @@ export class AuthService {
     return credentials;
   }
 
-  async registerDoctor(doctor: DoctorRegisterDTO): Promise<Token> {
+  async registerDoctor(doctor: DoctorRegisterDTO) {
     return this.prisma.$transaction(
       async (tx) => {
         const { credentials: userCredentials, user } = await this.createUser(
@@ -142,11 +142,9 @@ export class AuthService {
           await deleteUser(userCredentials.user);
           throw error;
         }
-
-        return { token: await userCredentials.user.getIdToken() };
       },
       {
-        timeout: 60000,
+        timeout: 20000,
       },
     );
   }

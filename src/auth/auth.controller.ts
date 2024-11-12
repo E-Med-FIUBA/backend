@@ -12,10 +12,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register/doctor')
-  registerDoctor(
-    @Body() doctor: DoctorRegisterDTO,
-  ): Promise<{ token: string }> {
-    return this.authService.registerDoctor(doctor);
+  async registerDoctor(@Body() doctor: DoctorRegisterDTO) {
+    await this.authService.registerDoctor(doctor);
+    return {
+      message: 'Doctor creation in progress',
+    };
   }
 
   @Post('register/pharmacist')
