@@ -215,6 +215,10 @@ export class PrescriptionsService {
   }
 
   async verify(id: number): Promise<Prescription> {
+    if (!this.isActivePrescription(id)) {
+      throw new BadRequestException('Prescription is being processed');
+    }
+
     const prescription = await this.prisma.prescription.findUnique({
       where: {
         id,
