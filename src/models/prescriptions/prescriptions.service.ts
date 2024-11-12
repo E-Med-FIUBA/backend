@@ -367,10 +367,6 @@ export class PrescriptionsService {
         });
 
         if (queueItem.action === QueueAction.UPDATE) {
-          console.log(
-            'Updated node for prescription',
-            queueItem.prescription.id,
-          );
           await this.prescriptionsTreeService.markAsUsed(
             queueItem.prescription,
             tx,
@@ -380,10 +376,6 @@ export class PrescriptionsService {
             queueItem.prescription.id,
           );
         } else if (queueItem.action === QueueAction.CREATE) {
-          console.log(
-            'Created node for prescription',
-            queueItem.prescription.id,
-          );
           await this.prescriptionsTreeService.createNode(
             queueItem.prescription,
             tx,
