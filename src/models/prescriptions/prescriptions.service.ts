@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma.service';
 import {
   Prescription,
+  PrescriptionNode,
   PrescriptionNodeQueue,
   QueueAction,
 } from '@prisma/client';
@@ -250,6 +251,7 @@ export class PrescriptionsService {
             drug: true,
           },
         },
+        prescriptionNodes: true,
         doctor: {
           include: {
             user: true,
@@ -267,7 +269,17 @@ export class PrescriptionsService {
       diagnosis: prescription.indication,
     };
 
-    // TODO: Add blockchain verification
+    if (!process.env.DISABLE_BLOCKCHAIN) {
+      const prescriptionNode = prescription.prescriptionNodes[0]; // TODO: Restrict to only one node
+      if (!prescriptionNode) {
+        throw new BadRequestException('Prescripcion invalida');
+      }
+      const isValidOnChain = await this.verifyOnChain(prescriptionNode);
+      if (!isValidOnChain) {
+        throw new BadRequestException('Prescripcion invalida');
+      }
+      console.log('Prescription is valid on chain');
+    }
 
     const isValid = await this.signatureService.verify(
       doctorId,
@@ -300,6 +312,29 @@ export class PrescriptionsService {
         },
       },
     });
+  }
+
+  private async verifyOnChain(
+    prescriptionNode: PrescriptionNode,
+  ): Promise<boolean> {
+    const proofData = await this.prescriptionsTreeService.verifyNode(
+      prescriptionNode.key,
+    );
+    const { proof } = await groth16.fullProve(
+      proofData,
+      'validium/merkle_inclusion_validation.wasm',
+      'validium/merkle_inclusion_circuit_final.zkey',
+    );
+
+    const isValidOnChain = await this.contractService.verifyPrescription(
+      proofData.key,
+      proofData.value,
+      proof,
+    );
+
+    console.log('isValidOnChain', isValidOnChain);
+
+    return isValidOnChain;
   }
 
   private async regenerateTransactions() {

@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma.service';
 import { PrismaTransactionalClient } from 'utils/types';
 import { NotFoundException } from '@nestjs/common';
 
-const keyLength = 4; // key length in bits - TODO: change this to a higher value. The number of available keys is 2^keyLength
+const keyLength = 24; // key length in bits - TODO: change this to a higher value. The number of available keys is 2^keyLength
 
 const padArray = <T>(
   arr: Array<T>,
@@ -23,7 +23,7 @@ export const splitKey = (_key: number): boolean[] => {
   return padArray(key, keyLength, false);
 };
 
-export interface ProofGenerationData {
+export interface CreationProofGenerationData {
   oldRoot: bigint;
   newRoot: bigint;
   siblings: bigint[];
@@ -32,6 +32,14 @@ export interface ProofGenerationData {
   isOld0: number;
   newKey: number;
   newValue: bigint;
+  [key: string]: any;
+}
+
+export interface InclusionProofGenerationData {
+  root: bigint;
+  siblings: bigint[];
+  key: number;
+  value: bigint;
   [key: string]: any;
 }
 
@@ -72,7 +80,7 @@ export class TreeService {
   async createNode(
     nodeData: NodeData,
     tx: PrismaTransactionalClient = this.prisma,
-  ): Promise<ProofGenerationData> {
+  ): Promise<CreationProofGenerationData> {
     const root = await this.getRoot(tx, true);
     if (!root) {
       return this.createRoot(nodeData, tx);
@@ -177,7 +185,7 @@ export class TreeService {
   private async createRoot(
     nodeData: NodeData,
     tx: PrismaTransactionalClient = this.prisma,
-  ): Promise<ProofGenerationData> {
+  ): Promise<CreationProofGenerationData> {
     const hashedValue = this.hashData(nodeData);
     const rootHash = this.hash1(nodeData.id, hashedValue);
     await tx[this.nodeRepositoryName].create({
@@ -194,7 +202,7 @@ export class TreeService {
     return {
       oldRoot: 0n,
       newRoot: rootHash,
-      siblings: [0n, 0n, 0n, 0n],
+      siblings: Array(keyLength).fill(0n),
       oldKey: 0,
       oldValue: 0n,
       isOld0: 1,
@@ -441,5 +449,29 @@ export class TreeService {
       });
       await this.updateHashes(parent, tx);
     }
+  }
+
+  protected async getNodeFromKey(
+    key: number,
+    includeData: boolean = false,
+    tx: PrismaTransactionalClient = this.prisma,
+  ): Promise<Node | null> {
+    return tx[this.nodeRepositoryName].findFirst({
+      where: { key },
+      include: { [this.entityName]: includeData },
+    });
+  }
+
+  async verifyNode(key: number): Promise<InclusionProofGenerationData> {
+    const root = await this.getRoot();
+    if (!root) throw new Error('Root node not found');
+    const siblings = await this.getSiblings(key);
+    const node = await this.getNodeFromKey(key, true);
+    return {
+      root: BigInt(root.hash),
+      siblings,
+      key: node.key,
+      value: this.hashData(node[this.entityName]),
+    };
   }
 }

@@ -121,6 +121,38 @@ export class ContractService {
     return txPrescriptionUsed.hash;
   }
 
+  async verifyPrescription(
+    key: number,
+    value: bigint,
+    proof: Proof,
+  ): Promise<boolean> {
+    const parsedKey = toHex(BigInt(key));
+    const parsedValue = toHex(value);
+    const parsedProof = parseProof(proof);
+
+    const estimatedGasLimit =
+      await contract.verifyPrescriptionInclusion.estimateGas(
+        parsedKey,
+        parsedValue,
+        parsedProof.pi_a,
+        parsedProof.pi_b,
+        parsedProof.pi_c,
+      );
+
+    console.log('estimatedGasLimit', estimatedGasLimit);
+
+    return contract.verifyPrescriptionInclusion(
+      parsedKey,
+      parsedValue,
+      parsedProof.pi_a,
+      parsedProof.pi_b,
+      parsedProof.pi_c,
+      {
+        gasLimit: estimatedGasLimit,
+      },
+    );
+  }
+
   async isTransactionFinished(txHash: string) {
     const receipt = await provider.getTransactionReceipt(txHash);
 
