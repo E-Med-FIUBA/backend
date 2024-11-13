@@ -18,6 +18,7 @@ import { MailingModule } from './mailing/mailing.module';
 import { SignatureModule } from './signature/signature.module';
 import { PatientNotesModule } from './models/patient-notes/patient-notes.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { PresentationsModule } from './models/presentations/presentations.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     MailingModule,
     SignatureModule,
     PatientNotesModule,
+    PresentationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
