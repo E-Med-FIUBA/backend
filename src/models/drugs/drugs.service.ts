@@ -66,4 +66,57 @@ export class DrugsService {
       },
     });
   }
+
+  search(query: string, page: number, limit: number) {
+    return this.prismaService.drug.findMany({
+      where: {
+        OR: [
+          {
+            name: {
+              contains: query,
+            },
+          },
+          {
+            description: {
+              contains: query,
+            },
+          },
+          {
+            administration: {
+              contains: query,
+            },
+          },
+          {
+            commercial_name: {
+              contains: query,
+            },
+          },
+          {
+            atc: {
+              contains: query,
+            },
+          },
+          {
+            form: {
+              contains: query,
+            },
+          },
+          {
+            presentations: {
+              some: {
+                name: {
+                  contains: query,
+                },
+              },
+            },
+          },
+        ],
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        presentations: true,
+      },
+    });
+  }
 }

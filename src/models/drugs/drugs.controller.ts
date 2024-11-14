@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Put,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -31,6 +32,8 @@ export class DrugsController {
     return this.drugsService.findAll();
   }
 
+
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.drugsService.findOne(+id);
@@ -50,5 +53,10 @@ export class DrugsController {
   @UseGuards(PharmacistGuard)
   getMetrics(@Req() req: ReqUser) {
     return this.drugsService.getMetrics(req.user.pharmacist.id);
+  }
+
+  @Get('search')
+  search(@Query('query') query: string, @Query('page') page: number = 1, @Query('limit') limit: number = 5) {
+    return this.drugsService.search(query, page, limit);
   }
 }
