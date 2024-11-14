@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { Drug, Presentation, PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
@@ -14,7 +14,7 @@ async function main() {
         crlfDelay: Infinity,
     });
 
-    const drugs = [];
+    const drugMap = new Map<string, Omit<Drug, 'id'> & { presentations: Omit<Presentation, 'id' | 'drugId'>[] }>();
     let isFirstLine = true;
 
     for await (const line of rl) {
@@ -22,7 +22,7 @@ async function main() {
             isFirstLine = false;
             continue; // Skip the header line
         }
-        const [
+        let [
             generic_name,
             _nombre_local,
             atc,
@@ -34,26 +34,46 @@ async function main() {
             presentacion
         ] = line.split('\t');
 
-        drugs.push({
-            name: generic_name,
-            administration: via,
-            commercial_name: nombre_comercial,
-            atc: atc,
-            form: forma,
-            description: '',
-            presentations: {
-                create: [
+
+        console.log(forma)
+        console.log(via)
+
+        forma = JSON.parse(forma.replace(/'/g, '"'));
+        via = JSON.parse(via.replace(/'/g, '"'));
+
+
+        if (!drugMap.has(generic_name)) {
+            drugMap.set(generic_name, {
+                name: generic_name,
+                atc: atc,
+                description: '',
+                presentations: [
                     {
-                        name: presentacion
+                        name: presentacion,
+                        form: forma,
+                        administration: via,
+                        commercial_name: nombre_comercial,
                     }
                 ]
-            }
+            });
+        }
+
+        drugMap.get(generic_name).presentations.push({
+            name: presentacion,
+            form: forma,
+            administration: via,
+            commercial_name: nombre_comercial,
         });
     }
 
-    for (const drug of drugs) {
+    for (const drug of drugMap.values()) {
         await prisma.drug.create({
-            data: drug,
+            data: {
+                ...drug,
+                presentations: {
+                    create: drug.presentations
+                }
+            },
         });
     }
 

@@ -72,7 +72,11 @@ async function main() {
     ];
 
     for (const specialty of specialties) {
-        await prisma.specialty.create({ data: specialty });
+        await prisma.specialty.upsert({
+            where: { name: specialty.name },
+            update: specialty,
+            create: specialty
+        });
     }
 }
 

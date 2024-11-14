@@ -15,22 +15,22 @@ datasource db {
 }
 
 model Drug {
-  id              Int            @id @default(autoincrement())
-  name            String
-  description     String
-  administration  String
-  commercial_name String
-  atc             String
-  form            String
-  presentations   Presentation[]
+  id            Int            @id @default(autoincrement())
+  name          String
+  description   String
+  atc           String
+  presentations Presentation[]
 }
 
 model Presentation {
-  id            Int            @id @default(autoincrement())
-  name          String
-  drugId        Int
-  drug          Drug           @relation(fields: [drugId], references: [id])
-  prescriptions Prescription[]
+  id              Int            @id @default(autoincrement())
+  name            String
+  drugId          Int
+  drug            Drug           @relation(fields: [drugId], references: [id])
+  administration  String
+  commercial_name String
+  form            String
+  prescriptions   Prescription[]
 }
 
 model User {
@@ -81,27 +81,28 @@ model Doctor {
 
 model Specialty {
   id     Int      @id @default(autoincrement())
-  name   String
+  name   String   @unique
   doctor Doctor[]
 }
 
 model Prescription {
-  id                Int                @id @default(autoincrement())
-  presentationId    Int
-  presentation      Presentation       @relation(fields: [presentationId], references: [id])
-  indication        String
-  patient           Patient            @relation(fields: [patientId], references: [id])
-  patientId         Int
-  doctor            Doctor             @relation(fields: [doctorId], references: [id])
-  doctorId          Int
-  quantity          Int
-  emitedAt          DateTime
-  prescriptionNodes PrescriptionNode[]
-  signature         String
-  used              Boolean            @default(false)
-  pharmacistId      Int?
-  pharmacist        Pharmacist?        @relation(fields: [pharmacistId], references: [id])
+  id                    Int                    @id @default(autoincrement())
+  presentationId        Int
+  presentation          Presentation           @relation(fields: [presentationId], references: [id])
+  indication            String
+  patient               Patient                @relation(fields: [patientId], references: [id])
+  patientId             Int
+  doctor                Doctor                 @relation(fields: [doctorId], references: [id])
+  doctorId              Int
+  quantity              Int
+  emitedAt              DateTime
+  prescriptionNodes     PrescriptionNode[]
+  signature             String
+  used                  Boolean                @default(false)
+  pharmacistId          Int?
+  pharmacist            Pharmacist?            @relation(fields: [pharmacistId], references: [id])
   prescriptionNodeQueue PrescriptionNodeQueue?
+  usedAt                DateTime
 }
 
 model Pharmacist {

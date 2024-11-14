@@ -31,7 +31,7 @@ export class PrescriptionsService {
     private contractService: ContractService,
     private mailingService: MailingService,
     private signatureService: SignatureService,
-  ) {}
+  ) { }
 
   create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
@@ -57,6 +57,7 @@ export class PrescriptionsService {
         doctorId: data.doctorId,
         patientId: data.patientId,
         signature: data.signature,
+        usedAt: null
       },
       include: {
         presentation: {
@@ -198,6 +199,7 @@ export class PrescriptionsService {
       data: {
         used: true,
         pharmacistId,
+        usedAt: new Date(),
       },
     });
 
@@ -308,6 +310,12 @@ export class PrescriptionsService {
         patient: {
           include: {
             insuranceCompany: true,
+          },
+        },
+        doctor: {
+          include: {
+            user: true,
+            specialty: true,
           },
         },
       },

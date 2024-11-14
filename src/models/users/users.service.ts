@@ -2,10 +2,11 @@ import { User } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaTransactionalClient } from 'utils/types';
+import { firebaseAdmin } from 'src/firebase/firebase';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   create(data: Omit<User, 'id'>, tx: PrismaTransactionalClient = this.prisma) {
     return tx.user.create({
@@ -78,5 +79,18 @@ export class UsersService {
     }
 
     return users[0];
+  }
+
+  async deleteAll() {
+    try {
+      const listUsersResult = await firebaseAdmin.auth().listUsers();
+      await Promise.all(
+        listUsersResult.users.map(async (user) => {
+          await firebaseAdmin.auth().deleteUser(user.uid);
+        }),
+      );
+    } catch (error) {
+      throw new Error(`Failed to delete all users: ${error.message}`);
+    }
   }
 }

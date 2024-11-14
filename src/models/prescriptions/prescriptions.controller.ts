@@ -27,7 +27,14 @@ export class PrescriptionsController {
     private prescriptionsService: PrescriptionsService,
     private patientsService: PatientsService,
     private mailingService: MailingService,
-  ) {}
+  ) { }
+
+  @Get('history')
+  @UseGuards(PharmacistGuard)
+  findAllUsed(@Req() req): Promise<Prescription[]> {
+    const pharmacistId = req.user?.pharmacist?.id;
+    return this.prescriptionsService.findAllByPharmacist(pharmacistId);
+  }
 
   @Get()
   @UseGuards(DoctorGuard)
@@ -68,6 +75,7 @@ export class PrescriptionsController {
       doctorId,
       used: false,
       pharmacistId: null,
+      usedAt: null
     });
 
     return prescription;
@@ -103,6 +111,7 @@ export class PrescriptionsController {
       doctorId,
       used: false,
       pharmacistId: null,
+      usedAt: null
     });
 
     return prescription;
@@ -117,13 +126,5 @@ export class PrescriptionsController {
     return this.prescriptionsService.markAsUsed(id, req.user!.pharmacist.id);
   }
 
-  @Get('used')
-  @UseGuards(PharmacistGuard)
-  findAllUsed(@Req() req): Promise<Prescription[]> {
-    const pharmacistId = req.user?.pharmacist?.id;
-    if (!pharmacistId) {
-      throw new UnauthorizedException('Unauthorized');
-    }
-    return this.prescriptionsService.findAllByPharmacist(pharmacistId);
-  }
+
 }
