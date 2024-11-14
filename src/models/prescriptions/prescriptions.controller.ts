@@ -63,6 +63,13 @@ export class PrescriptionsController {
     return this.prescriptionsService.findAllByPharmacist(pharmacistId);
   }
 
+  @Get('metrics')
+  @UseGuards(PharmacistGuard)
+  getMetrics(@Req() req): Promise<any> {
+    const pharmacistId = req.user?.pharmacist?.id;
+    return this.prescriptionsService.getMetrics(pharmacistId);
+  }
+
   @Get()
   @UseGuards(DoctorGuard)
   findAll(@Req() req): Promise<Prescription[]> {

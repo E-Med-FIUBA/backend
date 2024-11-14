@@ -585,4 +585,25 @@ export class PrescriptionsService {
     });
     return prescription === null;
   }
+
+  async getMetrics(pharmacistId: number) {
+    return {
+      topDrugs: [
+        { name: 'Omeprazol', count: 245 },
+        { name: 'Dipirona', count: 198 },
+        { name: 'Amoxicilina', count: 167 },
+        { name: 'Paracetamol', count: 156 },
+        { name: 'Ibuprofeno', count: 143 },
+        { name: 'Metformina', count: 132 },
+        { name: 'Losartana', count: 121 },
+        { name: 'Atenolol', count: 98 },
+      ],
+      totalPrescriptions: 1260,
+      averageDailyPrescriptions: 42.0,
+      uniquePatients: 875,
+      uniqueDoctors: 45,
+    };
+  }
+
+
 }
