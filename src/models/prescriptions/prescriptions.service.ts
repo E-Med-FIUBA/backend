@@ -52,12 +52,18 @@ export class PrescriptionsService {
       data: {
         emitedAt: data.emitedAt,
         quantity: data.quantity,
-        presentationId: data.presentationId,
         indication: data.indication,
-        doctorId: data.doctorId,
-        patientId: data.patientId,
+        doctor: {
+          connect: { id: data.doctorId }
+        },
+        patient: {
+          connect: { id: data.patientId }
+        },
         signature: data.signature,
-        usedAt: null
+        usedAt: null,
+        presentation: {
+          connect: { id: data.presentationId }
+        }
       },
       include: {
         presentation: {
@@ -167,8 +173,26 @@ export class PrescriptionsService {
   findOne(id: number) {
     return this.prisma.prescription.findUnique({
       where: {
-        id,
+        id: id,
       },
+      include: {
+        presentation: {
+          include: {
+            drug: true,
+          },
+        },
+        patient: {
+          include: {
+            insuranceCompany: true,
+          },
+        },
+        doctor: {
+          include: {
+            user: true,
+            specialty: true,
+          },
+        },
+      }
     });
   }
 
@@ -255,10 +279,19 @@ export class PrescriptionsService {
         },
         prescriptionNodes: true,
         doctor: {
-          include: {
-            user: true,
-          },
+          select: {
+            id: true,
+            license: true,
+            user: {
+              select: {
+                name: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
         },
+        patient: true
       },
     });
 
@@ -283,15 +316,15 @@ export class PrescriptionsService {
       console.log('Prescription is valid on chain');
     }
 
-    const isValid = await this.signatureService.verify(
-      doctorId,
-      JSON.stringify(data),
-      prescription.signature,
-    );
+    // const isValid = await this.signatureService.verify(
+    //   doctorId,
+    //   JSON.stringify(data),
+    //   prescription.signature,
+    // );
 
-    if (!isValid) {
-      throw new BadRequestException('Prescripcion invalida');
-    }
+    // if (!isValid) {
+    //   throw new BadRequestException('Prescripcion invalida');
+    // }
     return prescription;
   }
 
@@ -313,11 +346,16 @@ export class PrescriptionsService {
           },
         },
         doctor: {
-          include: {
+          select: {
+            id: true,
+            license: true,
             user: true,
             specialty: true,
           },
         },
+      },
+      orderBy: {
+        usedAt: 'desc',
       },
     });
   }

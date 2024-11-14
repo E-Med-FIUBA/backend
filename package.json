@@ -21,7 +21,8 @@
     "psql-up": "docker compose -f db/docker-compose-db.yaml up -d",
     "psql-down": "docker compose -f db/docker-compose-db.yaml down",
     "cfix": "npm run format && npm run lint",
-    "seed": "find prisma/seeders -name '*.ts' -exec ts-node {} \\;"
+    "seed": "find prisma/seeders -name '*.ts' -exec ts-node {} \\;",
+    "seed:test": "ts-node prisma/seeders/insurance_company.ts"
   },
   "dependencies": {
     "@firebase/auth": "^1.7.5",

@@ -34,14 +34,6 @@ async function main() {
             presentacion
         ] = line.split('\t');
 
-
-        console.log(forma)
-        console.log(via)
-
-        forma = JSON.parse(forma.replace(/'/g, '"'));
-        via = JSON.parse(via.replace(/'/g, '"'));
-
-
         if (!drugMap.has(generic_name)) {
             drugMap.set(generic_name, {
                 name: generic_name,
@@ -52,7 +44,7 @@ async function main() {
                         name: presentacion,
                         form: forma,
                         administration: via,
-                        commercial_name: nombre_comercial,
+                        commercialName: nombre_comercial,
                     }
                 ]
             });
@@ -62,7 +54,7 @@ async function main() {
             name: presentacion,
             form: forma,
             administration: via,
-            commercial_name: nombre_comercial,
+            commercialName: nombre_comercial,
         });
     }
 

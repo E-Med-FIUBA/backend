@@ -23,14 +23,14 @@ model Drug {
 }
 
 model Presentation {
-  id              Int            @id @default(autoincrement())
-  name            String
-  drugId          Int
-  drug            Drug           @relation(fields: [drugId], references: [id])
-  administration  String
-  commercial_name String
-  form            String
-  prescriptions   Prescription[]
+  id             Int            @id @default(autoincrement())
+  name           String
+  drugId         Int
+  drug           Drug           @relation(fields: [drugId], references: [id])
+  administration String
+  commercialName String
+  form           String
+  prescriptions  Prescription[]
 }
 
 model User {
@@ -102,7 +102,7 @@ model Prescription {
   pharmacistId          Int?
   pharmacist            Pharmacist?            @relation(fields: [pharmacistId], references: [id])
   prescriptionNodeQueue PrescriptionNodeQueue?
-  usedAt                DateTime
+  usedAt                DateTime?
 }
 
 model Pharmacist {
@@ -149,6 +149,7 @@ model DoctorNode {
 model InsuranceCompany {
   id      Int       @id @default(autoincrement())
   name    String
+  code    String    @unique
   patient Patient[]
 }
 

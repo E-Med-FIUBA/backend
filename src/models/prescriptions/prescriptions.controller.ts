@@ -29,6 +29,33 @@ export class PrescriptionsController {
     private mailingService: MailingService,
   ) { }
 
+  @Post(':id/use')
+  @UseGuards(PharmacistGuard)
+  markAsUsed(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: ReqUser,
+  ): Promise<Prescription> {
+    return this.prescriptionsService.markAsUsed(id, req.user!.pharmacist.id);
+  }
+
+  @Post('manual-send')
+  @UseGuards(DoctorGuard)
+  async manualSend(
+    @Body('prescriptionId') prescriptionId: number,
+    @Req() req,
+  ): Promise<Prescription> {
+    const doctorId = req.user?.doctor?.id;
+    if (!doctorId) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    const prescription = await this.prescriptionsService.findOne(prescriptionId);
+
+    this.mailingService.sendPrescription(prescription.patient.email, prescription.patient, prescription.doctor, prescription);
+
+    return prescription;
+  }
+
   @Get('history')
   @UseGuards(PharmacistGuard)
   findAllUsed(@Req() req): Promise<Prescription[]> {
@@ -115,15 +142,6 @@ export class PrescriptionsController {
     });
 
     return prescription;
-  }
-
-  @Post(':id/use')
-  @UseGuards(PharmacistGuard)
-  markAsUsed(
-    @Param('id', ParseIntPipe) id: number,
-    @Req() req: ReqUser,
-  ): Promise<Prescription> {
-    return this.prescriptionsService.markAsUsed(id, req.user!.pharmacist.id);
   }
 
 

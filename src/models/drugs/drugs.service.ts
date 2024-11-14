@@ -82,22 +82,7 @@ export class DrugsService {
             },
           },
           {
-            administration: {
-              contains: query,
-            },
-          },
-          {
-            commercial_name: {
-              contains: query,
-            },
-          },
-          {
             atc: {
-              contains: query,
-            },
-          },
-          {
-            form: {
               contains: query,
             },
           },
