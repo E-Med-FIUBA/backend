@@ -587,21 +587,50 @@ export class PrescriptionsService {
   }
 
   async getMetrics(pharmacistId: number) {
+    const prescriptions = await this.prisma.prescription.findMany({
+      where: {
+        pharmacistId,
+      },
+      include: {
+        presentation: {
+          include: {
+            drug: true,
+          },
+        },
+      },
+    });
+
+    const topDrugs = Object.values(
+      prescriptions.reduce((acc, prescription) => {
+        const drug = prescription.presentation.drug;
+        if (!acc[drug.id]) {
+          acc[drug.id] = {
+            name: drug.name,
+            count: 0,
+          };
+        }
+        acc[drug.id].count += prescription.quantity;
+        return acc;
+      }, {} as Record<string, { name: string; count: number }>)
+    )
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const totalPrescriptions = prescriptions.length;
+
+    const totalDays = Math.ceil((new Date().getTime() - Math.min(...prescriptions.map(p => p.usedAt?.getTime() || new Date().getTime()))) / (1000 * 60 * 60 * 24));
+    const averageDailyPrescriptions = totalPrescriptions / totalDays;
+
+    const uniquePatients = new Set(prescriptions.map(p => p.patientId)).size;
+
+    const uniqueDoctors = new Set(prescriptions.map(p => p.doctorId)).size;
+
     return {
-      topDrugs: [
-        { name: 'Omeprazol', count: 245 },
-        { name: 'Dipirona', count: 198 },
-        { name: 'Amoxicilina', count: 167 },
-        { name: 'Paracetamol', count: 156 },
-        { name: 'Ibuprofeno', count: 143 },
-        { name: 'Metformina', count: 132 },
-        { name: 'Losartana', count: 121 },
-        { name: 'Atenolol', count: 98 },
-      ],
-      totalPrescriptions: 1260,
-      averageDailyPrescriptions: 42.0,
-      uniquePatients: 875,
-      uniqueDoctors: 45,
+      topDrugs,
+      totalPrescriptions,
+      averageDailyPrescriptions,
+      uniquePatients,
+      uniqueDoctors,
     };
   }
 
