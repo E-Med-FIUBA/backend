@@ -32,7 +32,22 @@ export class DrugsController {
     return this.drugsService.findAll();
   }
 
+  @Get('search')
+  search(
+    @Query('query') query: string,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ) {
+    page = page || 1;
+    limit = limit || 10;
+    return this.drugsService.search(query, page, limit);
+  }
 
+  @Get('metrics')
+  @UseGuards(PharmacistGuard)
+  getMetrics(@Req() req: ReqUser) {
+    return this.drugsService.getMetrics(req.user.pharmacist.id);
+  }
 
   @Get(':id')
   findOne(@Param('id') id: number) {
@@ -47,16 +62,5 @@ export class DrugsController {
   @Delete(':id')
   remove(@Param('id') id: number) {
     return this.drugsService.remove(+id);
-  }
-
-  @Get('metrics')
-  @UseGuards(PharmacistGuard)
-  getMetrics(@Req() req: ReqUser) {
-    return this.drugsService.getMetrics(req.user.pharmacist.id);
-  }
-
-  @Get('search')
-  search(@Query('query') query: string, @Query('page') page: number = 1, @Query('limit') limit: number = 5) {
-    return this.drugsService.search(query, page, limit);
   }
 }

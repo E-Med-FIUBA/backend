@@ -5,8 +5,7 @@ import { Drug } from '@prisma/client';
 
 @Injectable()
 export class DrugsService {
-
-  constructor(private prismaService: PrismaService) { }
+  constructor(private prismaService: PrismaService) {}
 
   create(data: Omit<Drug, 'id'>) {
     return this.prismaService.drug.create({
@@ -74,16 +73,19 @@ export class DrugsService {
           {
             name: {
               contains: query,
+              mode: 'insensitive',
             },
           },
           {
             description: {
               contains: query,
+              mode: 'insensitive',
             },
           },
           {
             atc: {
               contains: query,
+              mode: 'insensitive',
             },
           },
           {
@@ -91,6 +93,7 @@ export class DrugsService {
               some: {
                 name: {
                   contains: query,
+                  mode: 'insensitive',
                 },
               },
             },
