@@ -1,0 +1,8 @@
+commands:
+  01_prisma_generate:
+    command: 'npm install'
+    ignoreErrors: false
+
+  02_prisma_migrate:
+    command: 'npx prisma migrate deploy'
+    ignoreErrors: false
