@@ -183,7 +183,7 @@ export class AuthService {
 
   async loginDoctor(
     loginInfo: LoginDTO,
-  ): Promise<{ token: string; userId: number }> {
+  ): Promise<{ token: string; userId: number, license: string, specialty: string, name: string, lastName: string }> {
     const { token, user } = await this.getUser(loginInfo);
     if (!user?.doctor) {
       throw new UnauthorizedException({
@@ -197,7 +197,7 @@ export class AuthService {
       });
     }
 
-    return { token, userId: user?.id };
+    return { token, userId: user?.id, license: user.doctor.license, specialty: user.doctor.specialty.name, name: user.name, lastName: user.lastName };
   }
 
   async getUserToken(

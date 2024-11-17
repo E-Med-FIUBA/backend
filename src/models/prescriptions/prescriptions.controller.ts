@@ -105,7 +105,7 @@ export class PrescriptionsController {
 
     const prescription = await this.prescriptionsService.create({
       ...prescriptionDTO,
-      emitedAt: new Date(),
+      emitedAt: prescriptionDTO.emitedAt,
       doctorId,
       used: false,
       pharmacistId: null,

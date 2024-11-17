@@ -288,20 +288,59 @@ export class PrescriptionsService {
                 lastName: true,
                 email: true
               }
+            },
+            specialty: {
+              select: {
+                name: true
+              }
             }
           }
         },
-        patient: true
-      },
+        patient: {
+          select: {
+            name: true,
+            lastName: true,
+            birthDate: true,
+            sex: true,
+            dni: true,
+            insuranceCompany: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
+      }
     });
 
-    const drugId = prescription.presentation.drugId;
     const doctorId = prescription.doctorId;
+    const user = prescription.doctor.user;
+    const specialtyName = prescription.doctor.specialty.name;
+    const license = prescription.doctor.license;
+    const presentation = prescription.presentation;
+    const drug = presentation.drug;
 
     const data = {
-      medicationId: drugId,
-      presentation: prescription.presentationId,
-      diagnosis: prescription.indication,
+      professional: {
+        fullName: `${user?.name} ${user?.lastName}`,
+        professionSpecialty: specialtyName,
+        license: license,
+      },
+      patient: {
+        fullName: `${prescription.patient.name} ${prescription.patient.lastName}`,
+        insurancePlan: prescription.patient.insuranceCompany.name,
+        birthDate: new Date(prescription.patient.birthDate).toLocaleDateString('en-GB'),
+        sex: prescription.patient.sex,
+        dni: prescription.patient.dni,
+      },
+      prescription: {
+        genericName: drug!.name,
+        presentationId: presentation!.name,
+        pharmaceuticalForm: presentation!.form,
+        unitCount: prescription.quantity,
+        diagnosis: prescription.indication,
+      },
+      date: prescription.emitedAt.toISOString().split('T')[0],
     };
 
     if (!process.env.DISABLE_BLOCKCHAIN) {
@@ -316,15 +355,15 @@ export class PrescriptionsService {
       console.log('Prescription is valid on chain');
     }
 
-    // const isValid = await this.signatureService.verify(
-    //   doctorId,
-    //   JSON.stringify(data),
-    //   prescription.signature,
-    // );
+    const isValid = await this.signatureService.verify(
+      doctorId,
+      JSON.stringify(data),
+      prescription.signature,
+    );
 
-    // if (!isValid) {
-    //   throw new BadRequestException('Prescripcion invalida');
-    // }
+    if (!isValid) {
+      throw new BadRequestException('Prescripcion invalida');
+    }
     return prescription;
   }
 

@@ -61,7 +61,11 @@ export class UsersService {
         uid,
       },
       include: {
-        doctor: true,
+        doctor: {
+          include: {
+            specialty: true,
+          },
+        },
         pharmacist: true,
       },
     });
