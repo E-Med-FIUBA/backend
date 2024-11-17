@@ -1,0 +1,25 @@
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20.15
+    commands:
+      - npm ci
+  prisma_generate:
+    commands:
+      - npx prisma generate
+  build:
+    commands:
+      - npm run build
+  post_build:
+    commands:
+      - echo Build completed on `date`
+artifacts:
+  type: zip
+  files:
+    - dist/**/*
+    - prisma/**
+    - package.json
+    - .ebextensions
+cache:
+  paths:
+    - node_modules
