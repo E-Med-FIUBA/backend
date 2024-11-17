@@ -1,6 +1,6 @@
 commands:
   01_prisma_generate:
-    command: 'npm install'
+    command: 'npm install && npm prisma generate'
     ignoreErrors: false
 
   02_prisma_migrate:
