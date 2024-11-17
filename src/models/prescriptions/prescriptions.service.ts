@@ -587,6 +587,7 @@ export class PrescriptionsService {
   }
 
   async getMetrics(pharmacistId: number) {
+
     const prescriptions = await this.prisma.prescription.findMany({
       where: {
         pharmacistId,
@@ -600,7 +601,7 @@ export class PrescriptionsService {
       },
     });
 
-    const topDrugs = Object.values(
+    let topDrugs = Object.values(
       prescriptions.reduce((acc, prescription) => {
         const drug = prescription.presentation.drug;
         if (!acc[drug.id]) {
@@ -615,6 +616,11 @@ export class PrescriptionsService {
     )
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
+
+    if (topDrugs.length < 5) {
+      topDrugs = [];
+    }
+
 
     const totalPrescriptions = prescriptions.length;
 

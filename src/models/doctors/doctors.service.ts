@@ -20,24 +20,14 @@ export class DoctorsService {
     private patientsService: PatientsService,
     private doctorsTreeService: DoctorsTreeService,
     private contractService: ContractService,
-    private signatureService: SignatureService,
     private mailingService: MailingService,
-  ) {}
+  ) { }
 
   async create(data: DoctorData, tx: PrismaTransactionalClient = this.prisma) {
-    const credentials = await this.signatureService.generateCredentials({
-      ...data,
-      countryName: 'AR',
-      localityName: 'CABA',
-      province: 'CABA',
-    });
     const doctor = await tx.doctor.create({
       data: {
         license: data.license,
-        certificateRequest: credentials.csr,
-        privateKey: credentials.privateKey,
-        salt: credentials.salt,
-        iv: credentials.iv,
+        certificate: data.certificate,
         user: {
           connect: {
             id: data.userId,
@@ -171,9 +161,7 @@ export class DoctorsService {
             license: queueItem.doctor.license,
             userId: queueItem.doctor.userId,
             specialtyId: queueItem.doctor.specialtyId,
-            certificate: null, // TODO: Check these params
-            certificateRequest: null, // TODO: Check these params
-            privateKey: null, // TODO: Check these params
+            certificate: queueItem.doctor.certificate,
             name: queueItem.doctor.user.name,
             lastName: queueItem.doctor.user.lastName,
           },

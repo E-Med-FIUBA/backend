@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -12,28 +11,13 @@ import {
 import { DoctorsService } from './doctors.service';
 import { ApiTags } from '@nestjs/swagger';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
-import { SignatureService } from 'src/signature/signature.service';
 import { DoctorGuard } from 'src/auth/guards/doctor.guard';
-import { ReqUser } from 'src/utils/req_user';
 
 @ApiTags('doctors')
 @Controller('doctors')
 @UseGuards(DoctorGuard)
 export class DoctorsController {
-  constructor(private doctorsService: DoctorsService, private signatureService: SignatureService) { }
-
-  @Get('private-key')
-  public async getPrivateKey(@Req() req: ReqUser): Promise<{ privateKey: string }> {
-    const user = req.user;
-
-    const doctor = await this.doctorsService.getDoctorByUserId(user.id);
-
-    if (!doctor) {
-      throw new BadRequestException('Doctor not found');
-    }
-
-    return { privateKey: await this.signatureService.getPrivateKeyPEM(doctor.id) };
-  }
+  constructor(private doctorsService: DoctorsService) { }
 
   @Get(':id')
   findOne(@Param('id') id: number) {
@@ -55,6 +39,4 @@ export class DoctorsController {
   public getDoctorsPatients(@Param('id') id: number) {
     return this.doctorsService.getDoctorsPatients(id);
   }
-
-
 }

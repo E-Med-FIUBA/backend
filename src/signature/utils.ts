@@ -1,12 +1,12 @@
 import { pki, util } from "node-forge";
-import { CSR, KeyPair } from "./types";
+import { KeyPair } from "./types";
 import { DoctorData } from "./signature.service";
 
 export function generateKeyPair(): KeyPair {
     return pki.rsa.generateKeyPair(2048);
 }
 
-export function generateCSR(keys: KeyPair, doctor: DoctorData): CSR {
+export function generateCSR(keys: KeyPair, doctor: DoctorData) {
     const csr = pki.createCertificationRequest();
     csr.publicKey = keys.publicKey;
     csr.setSubject([{

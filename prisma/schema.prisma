@@ -71,11 +71,7 @@ model Doctor {
   prescriptions      Prescription[]
   patients           Patient[]
   doctorNodes        DoctorNode[]
-  certificateRequest String
-  certificate        String?
-  privateKey         String
-  salt               String
-  iv                 String
+  certificate        String
   DoctorNodeQueue    DoctorNodeQueue?
 }
 
