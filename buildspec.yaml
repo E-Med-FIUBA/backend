@@ -5,7 +5,7 @@ phases:
       nodejs: 20.15
     commands:
       - npm ci
-  prisma_generate:
+  pre_build:
     commands:
       - npx prisma generate
   build:
