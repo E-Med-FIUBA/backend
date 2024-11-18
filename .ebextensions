@@ -1,6 +1,6 @@
 commands:
   01_export_env_vars:
-    command: 'export DATABASE_URL=postgresql://$RDS_USERNAME:$RDS_PASSWORD@$RDS_HOSTNAME:$RDS_PORT/$RDS_DB_NAME'
+    command: 'printf "DATABASE_URL=postgres://%s:%s@%s:%s/%s" $RDS_USERNAME $RDS_PASSWORD $RDS_HOSTNAME $RDS_PORT $RDS_DB_NAME > /opt/elasticbeanstalk/deployment/env'
     ignoreErrors: false
   02_prisma_generate:
     command: 'npx prisma generate'
