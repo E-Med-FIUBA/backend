@@ -4,24 +4,26 @@ phases:
     runtime-versions:
       nodejs: 20.15
     commands:
+      - echo Installing source NPM dependencies
       - npm ci
   pre_build:
     commands:
+      - echo Generating Prisma Client
       - npx prisma generate
   build:
     commands:
+      - echo Build started on `date`
       - npm run build
   post_build:
     commands:
       - echo Build completed on `date`
 artifacts:
-  type: zip
   files:
     - dist/**/*
     - prisma/**
     - package.json
-    - node_modules/**
+    - node_modules/**/*
     - .ebextensions
-cache:
-  paths:
-    - node_modules
+# cache:
+#   paths:
+#     - node_modules
