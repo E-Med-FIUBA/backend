@@ -1,6 +1,6 @@
 commands:
   01_prisma_generate:
-    command: 'npm prisma generate'
+    command: 'npx prisma generate'
     ignoreErrors: false
 
   02_prisma_migrate:
