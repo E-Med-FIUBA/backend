@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { SignatureService } from './signature.service';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../prisma.service';
 
 @Module({
-    providers: [SignatureService, PrismaService],
-    exports: [SignatureService],
+  providers: [SignatureService, PrismaService],
+  exports: [SignatureService],
 })
-export class SignatureModule { }
+export class SignatureModule {}

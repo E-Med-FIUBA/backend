@@ -5,13 +5,13 @@ import { DoctorsService } from './doctors.service';
 import { DoctorsController } from './doctors.controller';
 import { PatientsModule } from '../patients/patients.module';
 import { UsersModule } from '../users/users.module';
-import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
-import { DoctorsTreeModule } from 'src/models/doctors-tree/doctors-tree.module';
 import { ContractModule } from '../contract/contract.module';
 import { ContractService } from '../contract/contract.service';
-import { SignatureModule } from 'src/signature/signature.module';
-import { MailingModule } from 'src/mailing/mailing.module';
-import { MailingService } from 'src/mailing/mailing.service';
+import { DoctorsTreeModule } from '../doctors-tree/doctors-tree.module';
+import { SignatureModule } from '../../signature/signature.module';
+import { MailingModule } from '../../mailing/mailing.module';
+import { DoctorsTreeService } from '../doctors-tree/doctors-tree.service';
+import { MailingService } from '../../mailing/mailing.service';
 
 @Module({
   imports: [

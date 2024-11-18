@@ -7,10 +7,10 @@ import {
   UserCredential,
   deleteUser,
 } from 'firebase/auth';
-import { firebaseApp } from '../firebase/firebase';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -24,7 +24,8 @@ import { UserRegisterDTO } from '../models/users/dto/user-register.dto';
 import { DoctorRegisterDTO } from '../models/doctors/dto/doctor-register.dto';
 import { PharmacistRegisterDTO } from '../models/pharmacists/dto/pharmacist-register.dto';
 import { PrismaTransactionalClient } from 'utils/types';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../prisma.service';
+import { FirebaseApp } from '../firebase/firebase';
 
 @Injectable()
 export class AuthService {
@@ -33,10 +34,11 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly pharmacistsService: PharmacistsService,
     private readonly prisma: PrismaService,
-  ) { }
+    @Inject('FirebaseApp') private readonly firebaseApp: FirebaseApp,
+  ) {}
 
   async logout(): Promise<void> {
-    const auth = getAuth(firebaseApp);
+    const auth = getAuth(this.firebaseApp);
     try {
       await signOut(auth);
     } catch (error) {
@@ -100,7 +102,7 @@ export class AuthService {
     tx: PrismaTransactionalClient = this.prisma,
   ): Promise<UserCredential> {
     const credentials = await createUserWithEmailAndPassword(
-      getAuth(firebaseApp),
+      getAuth(this.firebaseApp),
       user.email,
       user.password,
     );
@@ -158,7 +160,7 @@ export class AuthService {
     return { token: await userCredentials.user.getIdToken() };
   }
 
-  private async getUser(loginInfo: LoginDTO) {
+  async getUser(loginInfo: LoginDTO) {
     const { token, uid } = await this.getUserToken(loginInfo);
     const user = await this.usersService.findByUIDIncludeData(uid);
 
@@ -181,9 +183,14 @@ export class AuthService {
     return { token, userId: user?.id };
   }
 
-  async loginDoctor(
-    loginInfo: LoginDTO,
-  ): Promise<{ token: string; userId: number, license: string, specialty: string, name: string, lastName: string }> {
+  async loginDoctor(loginInfo: LoginDTO): Promise<{
+    token: string;
+    userId: number;
+    license: string;
+    specialty: string;
+    name: string;
+    lastName: string;
+  }> {
     const { token, user } = await this.getUser(loginInfo);
     if (!user?.doctor) {
       throw new UnauthorizedException({
@@ -197,13 +204,20 @@ export class AuthService {
       });
     }
 
-    return { token, userId: user?.id, license: user.doctor.license, specialty: user.doctor.specialty.name, name: user.name, lastName: user.lastName };
+    return {
+      token,
+      userId: user?.id,
+      license: user.doctor.license,
+      specialty: user.doctor.specialty.name,
+      name: user.name,
+      lastName: user.lastName,
+    };
   }
 
   async getUserToken(
     loginInfo: LoginDTO,
   ): Promise<{ token: string; uid: string }> {
-    const auth = getAuth(firebaseApp);
+    const auth = getAuth(this.firebaseApp);
     let userCredentials: UserCredential;
     let token: string;
     try {
@@ -226,7 +240,7 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
     if (!user) throw new BadRequestException('Invalid email');
 
-    const auth = getAuth(firebaseApp);
+    const auth = getAuth(this.firebaseApp);
     sendPasswordResetEmail(auth, email);
   }
 }

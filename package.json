@@ -13,7 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
+    "test": "NODE_ENV=test jest --maxWorkers=4",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
@@ -21,8 +21,7 @@
     "psql-up": "docker compose -f db/docker-compose-db.yaml up -d",
     "psql-down": "docker compose -f db/docker-compose-db.yaml down",
     "cfix": "npm run format && npm run lint",
-    "seed": "find prisma/seeders -name '*.ts' -exec ts-node {} \\;",
-    "seed:test": "ts-node prisma/seeders/insurance_company.ts"
+    "seed": "find prisma/seeders -name '*.ts' -exec ts-node {} \\;"
   },
   "dependencies": {
     "@firebase/auth": "^1.7.5",

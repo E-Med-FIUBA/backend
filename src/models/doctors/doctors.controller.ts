@@ -11,13 +11,13 @@ import {
 import { DoctorsService } from './doctors.service';
 import { ApiTags } from '@nestjs/swagger';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
-import { DoctorGuard } from 'src/auth/guards/doctor.guard';
+import { DoctorGuard } from '../../auth/guards/doctor.guard';
 
 @ApiTags('doctors')
 @Controller('doctors')
 @UseGuards(DoctorGuard)
 export class DoctorsController {
-  constructor(private doctorsService: DoctorsService) { }
+  constructor(private doctorsService: DoctorsService) {}
 
   @Get(':id')
   findOne(@Param('id') id: number) {

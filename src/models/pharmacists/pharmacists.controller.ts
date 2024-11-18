@@ -12,13 +12,13 @@ import { PharmacistsService } from './pharmacists.service';
 import { Pharmacist } from '@prisma/client';
 import { PharmacistDTO } from './dto/pharmacist.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { PharmacistGuard } from 'src/auth/guards/pharmacist.guard';
+import { PharmacistGuard } from '../../auth/guards/pharmacist.guard';
 
 @ApiTags('pharmacists')
 @Controller('pharmacists')
 @UseGuards(PharmacistGuard)
 export class PharmacistsController {
-  constructor(private pharmacistsService: PharmacistsService) { }
+  constructor(private pharmacistsService: PharmacistsService) {}
 
   @Get()
   findAll(): Promise<Pharmacist[]> {

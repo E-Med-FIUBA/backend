@@ -1,27 +1,30 @@
 import {
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
-import { firebaseAdmin } from '../../firebase/firebase';
+import { FirebaseAdmin } from '../../firebase/firebase';
 import { UsersService } from '../../models/users/users.service';
 
 const logger = new Logger();
 
 @Injectable()
 export class DoctorGuard implements CanActivate {
-  constructor(private usersService: UsersService) { }
+  constructor(
+    private usersService: UsersService,
+    @Inject('FirebaseAdmin') private readonly firebaseAdmin: FirebaseAdmin,
+  ) {}
 
   public async canActivate(ctx: ExecutionContext): Promise<boolean> | never {
     const request = ctx.switchToHttp().getRequest();
     let decodedToken: DecodedIdToken;
     try {
       const token = request.headers.authorization.split(' ')[1];
-      decodedToken = await firebaseAdmin.auth().verifyIdToken(token);
-      logger.log('token: ', token);
+      decodedToken = await this.firebaseAdmin.auth().verifyIdToken(token);
 
       const user = await this.usersService.findByUIDIncludeData(
         decodedToken.uid,

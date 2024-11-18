@@ -13,8 +13,8 @@ import { DrugDTO } from './dto/drug.dto';
 import { DrugsService } from './drugs.service';
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
-import { PharmacistGuard } from 'src/auth/guards/pharmacist.guard';
-import { ReqUser } from 'src/utils/req_user';
+import { PharmacistGuard } from '../../auth/guards/pharmacist.guard';
+import { ReqUser } from '../../utils/req_user';
 
 @ApiTags('drugs')
 @Controller('drugs')

@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prescription } from '@prisma/client';
-import { PrismaService } from 'src/prisma.service';
 import { poseidon7 } from 'poseidon-lite';
-import { splitKey, TreeService } from 'src/models/tree.service';
 import {
   PrismaTransactionalClient,
   UpdateProofGenerationData,
 } from 'utils/types';
+import { splitKey, TreeService } from '../tree.service';
+import { PrismaService } from '../../prisma.service';
 
 @Injectable()
 export class PrescriptionsTreeService extends TreeService {

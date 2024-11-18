@@ -5,7 +5,7 @@ import { DoctorsModule } from '../models/doctors/doctors.module';
 import { UsersModule } from '../models/users/users.module';
 import { AuthService } from './auth.service';
 import { PharmacistsModule } from '../models/pharmacists/pharmacists.module';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from '../prisma.service';
 
 @Module({
   imports: [

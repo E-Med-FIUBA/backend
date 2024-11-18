@@ -19,6 +19,7 @@ import { SignatureModule } from './signature/signature.module';
 import { PatientNotesModule } from './models/patient-notes/patient-notes.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PresentationsModule } from './models/presentations/presentations.module';
+import { FirebaseModule } from './firebase/firebase';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { PresentationsModule } from './models/presentations/presentations.module
     SignatureModule,
     PatientNotesModule,
     PresentationsModule,
+    FirebaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

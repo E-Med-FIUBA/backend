@@ -1,18 +1,39 @@
-// Import the functions you need from the SDKs you need
+import { Module, Global } from '@nestjs/common';
 import { initializeApp } from 'firebase/app';
 import * as admin from 'firebase-admin';
 import { adminConfig } from './credentials/firebase-adminsdk';
 import { firebaseConfig } from './credentials/firebase-app';
 
-export const firebaseAdmin = admin.initializeApp({
-  credential: admin.credential.cert(adminConfig),
-});
+export type FirebaseAdmin = admin.app.App;
+export type FirebaseApp = ReturnType<typeof initializeApp>;
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+let firebaseAdmin: FirebaseAdmin | undefined;
+let firebaseApp: FirebaseApp | undefined;
 
-// Initialize Firebase
-export const firebaseApp = initializeApp(firebaseConfig);
+if (process.env.NODE_ENV !== 'test') {
+  firebaseAdmin = admin.initializeApp({
+    credential: admin.credential.cert(adminConfig),
+  });
 
-export { admin };
-// const analytics = getAnalytics(app);
+  firebaseApp = initializeApp(firebaseConfig);
+}
+
+@Global()
+@Module({
+  providers: [
+    {
+      provide: 'FirebaseAdmin',
+      useValue: firebaseAdmin,
+    },
+    {
+      provide: 'FirebaseApp',
+      useValue: firebaseApp,
+    },
+    {
+      provide: 'FirebaseAdminSDK',
+      useValue: admin,
+    },
+  ],
+  exports: ['FirebaseAdmin', 'FirebaseApp', 'FirebaseAdminSDK'],
+})
+export class FirebaseModule {}

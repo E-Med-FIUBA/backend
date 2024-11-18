@@ -1,12 +1,15 @@
 import { User } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { PrismaTransactionalClient } from 'utils/types';
-import { firebaseAdmin } from 'src/firebase/firebase';
+import { FirebaseAdmin } from '../../firebase/firebase';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    @Inject('FirebaseAdmin') private readonly firebaseAdmin: FirebaseAdmin,
+  ) {}
 
   create(data: Omit<User, 'id'>, tx: PrismaTransactionalClient = this.prisma) {
     return tx.user.create({
@@ -87,10 +90,10 @@ export class UsersService {
 
   async deleteAll() {
     try {
-      const listUsersResult = await firebaseAdmin.auth().listUsers();
+      const listUsersResult = await this.firebaseAdmin.auth().listUsers();
       await Promise.all(
         listUsersResult.users.map(async (user) => {
-          await firebaseAdmin.auth().deleteUser(user.uid);
+          await this.firebaseAdmin.auth().deleteUser(user.uid);
         }),
       );
     } catch (error) {

@@ -13,7 +13,7 @@ const logger = new Logger();
 
 const TEMPLATE_DIR = 'templates/';
 
-const sexMap = {
+export const sexMap = {
   [Sex.FEMALE]: 'Femenino',
   [Sex.MALE]: 'Masculino',
   [Sex.OTHER]: 'Otro',

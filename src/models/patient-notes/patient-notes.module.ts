@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { PatientNotesService } from './patient-notes.service';
 import { PatientNotesController } from './patient-notes.controller';
-import { PrismaService } from 'src/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
 import { UsersService } from '../users/users.service';
+import { PrismaService } from '../../prisma.service';
 
 @Module({
   imports: [
@@ -16,4 +16,4 @@ import { UsersService } from '../users/users.service';
   controllers: [PatientNotesController],
   providers: [PatientNotesService, UsersService, PrismaService],
 })
-export class PatientNotesModule { }
+export class PatientNotesModule {}
