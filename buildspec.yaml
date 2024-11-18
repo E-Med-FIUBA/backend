@@ -20,10 +20,11 @@ phases:
 artifacts:
   files:
     - dist/**/*
-    - prisma/**
+    - prisma/schema.prisma
     - package.json
     - node_modules/**/*
     - .ebextensions
+    - templates/**/*
 # cache:
 #   paths:
 #     - node_modules
