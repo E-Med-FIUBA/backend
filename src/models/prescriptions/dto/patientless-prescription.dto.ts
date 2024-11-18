@@ -26,7 +26,7 @@ export class PatientlessPrescriptionDTO {
 
   @IsDateString()
   @IsNotEmpty()
-  birthDate: Date;
+  birthDate: string;
 
   @IsEmail()
   email: string;
@@ -52,4 +52,8 @@ export class PatientlessPrescriptionDTO {
   @IsString()
   @IsNotEmpty()
   signature: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  emitedAt: string;
 }

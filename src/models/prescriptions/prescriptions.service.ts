@@ -12,13 +12,20 @@ import {
 } from '@prisma/client';
 import { poseidon3 } from 'poseidon-lite';
 import { groth16 } from 'snarkjs';
-import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
-import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
 import { ContractService, Proof } from '../contract/contract.service';
-import { SignatureService } from 'src/signature/signature.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaTransactionalClient } from 'utils/types';
-import { MailingService } from 'src/mailing/mailing.service';
+import { DoctorsTreeService } from '../doctors-tree/doctors-tree.service';
+import { PrescriptionsTreeService } from '../prescriptions-tree/prescriptions-tree.service';
+import { MailingService } from '../../mailing/mailing.service';
+import { SignatureService } from '../../signature/signature.service';
+import { PrescriptionHash } from './type/prescription-hash';
+import { VerifiedPrescription } from './type/prescription';
+import { PatientlessPrescriptionDTO } from './dto/patientless-prescription.dto';
+import { DoctorsService } from '../doctors/doctors.service';
+import { InsuranceService } from '../insurance/insurance.service';
+import { PrescriptionPatient } from './type/prescription-patient';
+import { PresentationsService } from '../presentations/presentations.service';
 
 @Injectable()
 export class PrescriptionsService {
@@ -31,7 +38,10 @@ export class PrescriptionsService {
     private contractService: ContractService,
     private mailingService: MailingService,
     private signatureService: SignatureService,
-  ) { }
+    private doctorsService: DoctorsService,
+    private insurancyCompanyService: InsuranceService,
+    private presentationsService: PresentationsService,
+  ) {}
 
   create(data: Omit<Prescription, 'id'>) {
     return this.prisma.$transaction(
@@ -48,22 +58,37 @@ export class PrescriptionsService {
     data: Omit<Prescription, 'id'>,
     tx: PrismaTransactionalClient = this.prisma,
   ) {
+    const isValid = await this.signatureService.verify(
+      data.doctorId,
+      JSON.stringify(
+        await this.generateSignatureData(
+          data as unknown as PatientlessPrescriptionDTO,
+          data.doctorId,
+        ),
+      ),
+      data.signature,
+    );
+
+    if (!isValid) {
+      throw new BadRequestException('Firma invalida');
+    }
+
     const prescription = await tx.prescription.create({
       data: {
         emitedAt: data.emitedAt,
         quantity: data.quantity,
         indication: data.indication,
         doctor: {
-          connect: { id: data.doctorId }
+          connect: { id: data.doctorId },
         },
         patient: {
-          connect: { id: data.patientId }
+          connect: { id: data.patientId },
         },
         signature: data.signature,
         usedAt: null,
         presentation: {
-          connect: { id: data.presentationId }
-        }
+          connect: { id: data.presentationId },
+        },
       },
       include: {
         presentation: {
@@ -192,7 +217,7 @@ export class PrescriptionsService {
             specialty: true,
           },
         },
-      }
+      },
     });
   }
 
@@ -286,15 +311,15 @@ export class PrescriptionsService {
               select: {
                 name: true,
                 lastName: true,
-                email: true
-              }
+                email: true,
+              },
             },
             specialty: {
               select: {
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         patient: {
           select: {
@@ -305,44 +330,22 @@ export class PrescriptionsService {
             dni: true,
             insuranceCompany: {
               select: {
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
-      }
+      },
     });
 
+    if (!prescription) {
+      throw new NotFoundException('Prescription no encontrada');
+    }
+
+    const data = await this.getPrescriptionData(
+      prescription as unknown as VerifiedPrescription,
+    );
     const doctorId = prescription.doctorId;
-    const user = prescription.doctor.user;
-    const specialtyName = prescription.doctor.specialty.name;
-    const license = prescription.doctor.license;
-    const presentation = prescription.presentation;
-    const drug = presentation.drug;
-
-    const data = {
-      professional: {
-        fullName: `${user?.name} ${user?.lastName}`,
-        professionSpecialty: specialtyName,
-        license: license,
-      },
-      patient: {
-        fullName: `${prescription.patient.name} ${prescription.patient.lastName}`,
-        insurancePlan: prescription.patient.insuranceCompany.name,
-        birthDate: new Date(prescription.patient.birthDate).toLocaleDateString('en-GB'),
-        sex: prescription.patient.sex,
-        dni: prescription.patient.dni,
-      },
-      prescription: {
-        genericName: drug!.name,
-        presentationId: presentation!.name,
-        pharmaceuticalForm: presentation!.form,
-        unitCount: prescription.quantity,
-        diagnosis: prescription.indication,
-      },
-      date: prescription.emitedAt.toISOString().split('T')[0],
-    };
-
     if (!process.env.DISABLE_BLOCKCHAIN) {
       const prescriptionNode = prescription.prescriptionNodes[0]; // TODO: Restrict to only one node
       if (!prescriptionNode) {
@@ -626,7 +629,6 @@ export class PrescriptionsService {
   }
 
   async getMetrics(pharmacistId: number) {
-
     const prescriptions = await this.prisma.prescription.findMany({
       where: {
         pharmacistId,
@@ -641,17 +643,20 @@ export class PrescriptionsService {
     });
 
     let topDrugs = Object.values(
-      prescriptions.reduce((acc, prescription) => {
-        const drug = prescription.presentation.drug;
-        if (!acc[drug.id]) {
-          acc[drug.id] = {
-            name: drug.name,
-            count: 0,
-          };
-        }
-        acc[drug.id].count += prescription.quantity;
-        return acc;
-      }, {} as Record<string, { name: string; count: number }>)
+      prescriptions.reduce(
+        (acc, prescription) => {
+          const drug = prescription.presentation.drug;
+          if (!acc[drug.id]) {
+            acc[drug.id] = {
+              name: drug.name,
+              count: 0,
+            };
+          }
+          acc[drug.id].count += prescription.quantity;
+          return acc;
+        },
+        {} as Record<string, { name: string; count: number }>,
+      ),
     )
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
@@ -660,15 +665,22 @@ export class PrescriptionsService {
       topDrugs = [];
     }
 
-
     const totalPrescriptions = prescriptions.length;
 
-    const totalDays = Math.ceil((new Date().getTime() - Math.min(...prescriptions.map(p => p.usedAt?.getTime() || new Date().getTime()))) / (1000 * 60 * 60 * 24));
+    const totalDays = Math.ceil(
+      (new Date().getTime() -
+        Math.min(
+          ...prescriptions.map(
+            (p) => p.usedAt?.getTime() || new Date().getTime(),
+          ),
+        )) /
+        (1000 * 60 * 60 * 24),
+    );
     const averageDailyPrescriptions = totalPrescriptions / totalDays;
 
-    const uniquePatients = new Set(prescriptions.map(p => p.patientId)).size;
+    const uniquePatients = new Set(prescriptions.map((p) => p.patientId)).size;
 
-    const uniqueDoctors = new Set(prescriptions.map(p => p.doctorId)).size;
+    const uniqueDoctors = new Set(prescriptions.map((p) => p.doctorId)).size;
 
     return {
       topDrugs,
@@ -679,5 +691,96 @@ export class PrescriptionsService {
     };
   }
 
+  async getPrescriptionData(
+    prescription: VerifiedPrescription,
+  ): Promise<PrescriptionHash> {
+    const user = prescription.doctor.user;
+    const specialtyName = prescription.doctor.specialty.name;
+    const license = prescription.doctor.license;
+    const presentation = prescription.presentation;
+    const drug = presentation.drug;
 
+    return {
+      professional: {
+        fullName: `${user?.name} ${user?.lastName}`,
+        professionSpecialty: specialtyName,
+        license: license,
+      },
+      patient: {
+        fullName: `${prescription.patient.name} ${prescription.patient.lastName}`,
+        insurancePlan: prescription.patient.insuranceCompany.name,
+        birthDate: new Date(prescription.patient.birthDate).toLocaleDateString(
+          'en-GB',
+        ),
+        sex: prescription.patient.sex,
+        dni: prescription.patient.dni,
+      },
+      prescription: {
+        genericName: drug!.name,
+        presentationName: presentation!.name,
+        pharmaceuticalForm: presentation!.form,
+        unitCount: prescription.quantity,
+        diagnosis: prescription.indication,
+      },
+      date: prescription.emitedAt.toISOString().split('T')[0],
+    };
+  }
+
+  private async getPatientFromPrescription(
+    prescription: PatientlessPrescriptionDTO,
+  ): Promise<PrescriptionPatient> {
+    const insuranceCompany = await this.insurancyCompanyService.findOne(
+      prescription.insuranceCompanyId,
+    );
+
+    const patient = {
+      name: prescription.name,
+      lastName: prescription.lastName,
+      birthDate: prescription.birthDate,
+      sex: prescription.sex,
+      dni: prescription.dni,
+      insuranceCompany: insuranceCompany,
+    };
+
+    return patient;
+  }
+  async generateSignatureData(
+    prescription: PatientlessPrescriptionDTO,
+    doctorId: number,
+  ): Promise<PrescriptionHash> {
+    const doctor = await this.doctorsService.findOne(doctorId);
+    const user = doctor.user;
+    const specialtyName = doctor.specialty.name;
+    const license = doctor.license;
+
+    const presentation = await this.presentationsService.findOne(
+      prescription.presentationId,
+    );
+
+    const patient = await this.getPatientFromPrescription(prescription);
+
+    const signatureData = {
+      professional: {
+        fullName: `${user?.name} ${user?.lastName}`,
+        professionSpecialty: specialtyName,
+        license: license,
+      },
+      patient: {
+        fullName: `${patient.name} ${patient.lastName}`,
+        insurancePlan: patient.insuranceCompany.name,
+        birthDate: patient.birthDate,
+        sex: patient.sex,
+        dni: patient.dni,
+      },
+      prescription: {
+        genericName: presentation.drug!.name,
+        presentationName: presentation!.name,
+        pharmaceuticalForm: presentation!.form,
+        unitCount: prescription.quantity,
+        diagnosis: prescription.indication,
+      },
+      date: prescription.emitedAt,
+    };
+    return signatureData;
+  }
 }

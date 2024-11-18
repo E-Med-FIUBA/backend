@@ -23,5 +23,5 @@ export class PrescriptionDTO {
 
   @IsDateString()
   @IsNotEmpty()
-  emitedAt: Date;
+  emitedAt: string;
 }
