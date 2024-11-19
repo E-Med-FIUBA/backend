@@ -23,7 +23,9 @@ export class DrugsService {
         id: id,
       },
       include: {
-        presentations: true,
+        presentations: {
+          distinct: ['name'],
+        },
       },
     });
   }
