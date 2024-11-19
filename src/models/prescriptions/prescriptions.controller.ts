@@ -13,12 +13,12 @@ import {
 } from '@nestjs/common';
 import { PrescriptionDTO } from './dto/prescription.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { MailingService } from 'src/mailing/mailing.service';
 import { PatientlessPrescriptionDTO } from './dto/patientless-prescription.dto';
 import { PatientsService } from '../patients/patients.service';
-import { DoctorGuard } from 'src/auth/guards/doctor.guard';
-import { PharmacistGuard } from 'src/auth/guards/pharmacist.guard';
-import { ReqUser } from 'src/utils/req_user';
+import { MailingService } from '../../mailing/mailing.service';
+import { PharmacistGuard } from '../../auth/guards/pharmacist.guard';
+import { ReqUser } from '../../utils/req_user';
+import { DoctorGuard } from '../../auth/guards/doctor.guard';
 
 @ApiTags('prescriptions')
 @Controller('prescriptions')
@@ -27,7 +27,7 @@ export class PrescriptionsController {
     private prescriptionsService: PrescriptionsService,
     private patientsService: PatientsService,
     private mailingService: MailingService,
-  ) { }
+  ) {}
 
   @Post(':id/use')
   @UseGuards(PharmacistGuard)
@@ -49,9 +49,15 @@ export class PrescriptionsController {
       throw new UnauthorizedException('Unauthorized');
     }
 
-    const prescription = await this.prescriptionsService.findOne(prescriptionId);
+    const prescription =
+      await this.prescriptionsService.findOne(prescriptionId);
 
-    this.mailingService.sendPrescription(prescription.patient.email, prescription.patient, prescription.doctor, prescription);
+    this.mailingService.sendPrescription(
+      prescription.patient.email,
+      prescription.patient,
+      prescription.doctor,
+      prescription,
+    );
 
     return prescription;
   }
@@ -109,7 +115,7 @@ export class PrescriptionsController {
       doctorId,
       used: false,
       pharmacistId: null,
-      usedAt: null
+      usedAt: null,
     });
 
     return prescription;
@@ -131,7 +137,7 @@ export class PrescriptionsController {
       lastName: prescriptionDTO.lastName,
       email: prescriptionDTO.email,
       insuranceCompanyId: prescriptionDTO.insuranceCompanyId,
-      birthDate: prescriptionDTO.birthDate,
+      birthDate: prescriptionDTO.birthDate as any,
       dni: prescriptionDTO.dni,
       affiliateNumber: prescriptionDTO.affiliateNumber,
       sex: prescriptionDTO.sex,
@@ -141,15 +147,13 @@ export class PrescriptionsController {
     const prescription = await this.prescriptionsService.create({
       ...prescriptionDTO,
       patientId: patient.id,
-      emitedAt: new Date(),
+      emitedAt: prescriptionDTO.emitedAt,
       doctorId,
       used: false,
       pharmacistId: null,
-      usedAt: null
+      usedAt: null,
     });
 
     return prescription;
   }
-
-
 }

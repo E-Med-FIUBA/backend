@@ -4,16 +4,19 @@ import { PrismaService } from '../../prisma.service';
 import { PrescriptionsController } from './prescriptions.controller';
 import { PrescriptionsService } from './prescriptions.service';
 import { UsersModule } from '../users/users.module';
-import { PrescriptionsTreeModule } from 'src/models/prescriptions-tree/prescriptions-tree.module';
-import { DoctorsTreeModule } from 'src/models/doctors-tree/doctors-tree.module';
-import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service';
-import { PrescriptionsTreeService } from 'src/models/prescriptions-tree/prescriptions-tree.service';
 import { ContractModule } from '../contract/contract.module';
 import { ContractService } from '../contract/contract.service';
-import { MailingModule } from 'src/mailing/mailing.module';
 import { PatientsModule } from '../patients/patients.module';
 import { PatientsService } from '../patients/patients.service';
-import { SignatureModule } from 'src/signature/signature.module';
+import { DoctorsTreeModule } from '../doctors-tree/doctors-tree.module';
+import { PrescriptionsTreeModule } from '../prescriptions-tree/prescriptions-tree.module';
+import { MailingModule } from '../../mailing/mailing.module';
+import { SignatureModule } from '../../signature/signature.module';
+import { PrescriptionsTreeService } from '../prescriptions-tree/prescriptions-tree.service';
+import { DoctorsTreeService } from '../doctors-tree/doctors-tree.service';
+import { DoctorsModule } from '../doctors/doctors.module';
+import { InsuranceModule } from '../insurance/insurance.module';
+import { PresentationsModule } from '../presentations/presentations.module';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { SignatureModule } from 'src/signature/signature.module';
     PatientsModule,
     MailingModule,
     SignatureModule,
+    DoctorsModule,
+    InsuranceModule,
+    PresentationsModule,
   ],
   controllers: [PrescriptionsController],
   providers: [
