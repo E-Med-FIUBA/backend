@@ -25,6 +25,7 @@ import { DoctorRegisterDTO } from '../models/doctors/dto/doctor-register.dto';
 import { PharmacistRegisterDTO } from '../models/pharmacists/dto/pharmacist-register.dto';
 import { PrismaTransactionalClient } from 'utils/types';
 import { PrismaService } from 'src/prisma.service';
+import { pki } from 'node-forge';
 
 @Injectable()
 export class AuthService {
@@ -33,7 +34,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly pharmacistsService: PharmacistsService,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   async logout(): Promise<void> {
     const auth = getAuth(firebaseApp);
@@ -119,6 +120,12 @@ export class AuthService {
   async registerDoctor(doctor: DoctorRegisterDTO) {
     return this.prisma.$transaction(
       async (tx) => {
+        if (!pki.certificateFromPem(doctor.certificate)) {
+          throw new BadRequestException({
+            message: 'Certificado invalido',
+          });
+        }
+
         const { credentials: userCredentials, user } = await this.createUser(
           doctor,
           tx,
@@ -181,9 +188,14 @@ export class AuthService {
     return { token, userId: user?.id };
   }
 
-  async loginDoctor(
-    loginInfo: LoginDTO,
-  ): Promise<{ token: string; userId: number, license: string, specialty: string, name: string, lastName: string }> {
+  async loginDoctor(loginInfo: LoginDTO): Promise<{
+    token: string;
+    userId: number;
+    license: string;
+    specialty: string;
+    name: string;
+    lastName: string;
+  }> {
     const { token, user } = await this.getUser(loginInfo);
     if (!user?.doctor) {
       throw new UnauthorizedException({
@@ -197,7 +209,14 @@ export class AuthService {
       });
     }
 
-    return { token, userId: user?.id, license: user.doctor.license, specialty: user.doctor.specialty.name, name: user.name, lastName: user.lastName };
+    return {
+      token,
+      userId: user?.id,
+      license: user.doctor.license,
+      specialty: user.doctor.specialty.name,
+      name: user.name,
+      lastName: user.lastName,
+    };
   }
 
   async getUserToken(

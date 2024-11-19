@@ -27,13 +27,13 @@ async function main() {
     }
     const [
       id,
-      generic_name,
-      _nombre_local,
       atc,
-      forma,
       _laboratorio,
-      via,
+      forma,
+      _nombre_local,
       _pais,
+      generic_name,
+      via,
       nombre_comercial,
       presentacion,
     ] = line.split('\t');
@@ -85,7 +85,7 @@ async function main() {
         },
       },
       where: {
-        name: drug.name,
+        id: drug.id,
       },
       update: {
         ...drug,
