@@ -16,7 +16,7 @@ datasource db {
 
 model Drug {
   id            Int            @id @default(autoincrement())
-  name          String
+  name          String         @unique
   description   String
   atc           String
   presentations Presentation[]
@@ -31,6 +31,8 @@ model Presentation {
   commercialName String
   form           String
   prescriptions  Prescription[]
+
+  @@unique([name, administration, commercialName, drugId])
 }
 
 model User {
