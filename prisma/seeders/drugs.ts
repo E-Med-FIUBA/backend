@@ -1,23 +1,9 @@
 import { Drug, Presentation, PrismaClient } from '@prisma/client';
-import { hash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 
 const prisma = new PrismaClient();
-
-const hashCode = (s: string) => {
-  let hash = 0,
-    i,
-    chr;
-  if (s.length === 0) return hash;
-  for (i = 0; i < s.length; i++) {
-    chr = s.charCodeAt(i);
-    hash = (hash << 5) - hash + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-};
 
 async function main() {
   const filePath = path.join(__dirname, '/../../../', 'prisma/data/drugs.tsv');
