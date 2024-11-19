@@ -701,7 +701,7 @@ export class PrescriptionsService {
     const specialtyName = prescription.doctor.specialty.name;
     const license = prescription.doctor.license;
     const presentation = prescription.presentation;
-    const drug = presentation.drug;
+    const patient = prescription.patient;
 
     return {
       professional: {
@@ -710,22 +710,20 @@ export class PrescriptionsService {
         license: license,
       },
       patient: {
-        fullName: `${prescription.patient.name} ${prescription.patient.lastName}`,
-        insurancePlan: prescription.patient.insuranceCompany.name,
-        birthDate: new Date(prescription.patient.birthDate).toLocaleDateString(
-          'en-GB',
-        ),
-        sex: prescription.patient.sex,
-        dni: prescription.patient.dni,
+        fullName: `${patient.name} ${patient.lastName}`,
+        insurancePlan: patient.insuranceCompany.name,
+        birthDate: patient.birthDate.toISOString(),
+        sex: patient.sex,
+        dni: patient.dni,
       },
       prescription: {
-        genericName: drug!.name,
+        genericName: presentation.drug!.name,
         presentationName: presentation!.name,
         pharmaceuticalForm: presentation!.form,
         unitCount: prescription.quantity,
         diagnosis: prescription.indication,
       },
-      date: prescription.emitedAt.toISOString().split('T')[0],
+      date: prescription.emitedAt.toISOString(),
     };
   }
 
