@@ -1,9 +1,23 @@
 import { Drug, Presentation, PrismaClient } from '@prisma/client';
+import { hash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
 
 const prisma = new PrismaClient();
+
+const hashCode = (s: string) => {
+  let hash = 0,
+    i,
+    chr;
+  if (s.length === 0) return hash;
+  for (i = 0; i < s.length; i++) {
+    chr = s.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
 
 async function main() {
   const filePath = path.join(__dirname, '/../../../', 'prisma/data/drugs.tsv');
@@ -16,10 +30,9 @@ async function main() {
 
   const drugMap = new Map<
     string,
-    Omit<Drug, 'id'> & { presentations: Omit<Presentation, 'id' | 'drugId'>[] }
+    Drug & { presentations: Omit<Presentation, 'id' | 'drugId'>[] }
   >();
   let isFirstLine = true;
-  let i = 1;
 
   for await (const line of rl) {
     if (isFirstLine) {
@@ -27,6 +40,7 @@ async function main() {
       continue; // Skip the header line
     }
     const [
+      id,
       generic_name,
       _nombre_local,
       atc,
@@ -40,14 +54,15 @@ async function main() {
 
     if (!drugMap.has(generic_name)) {
       drugMap.set(generic_name, {
+        id: parseInt(id),
         name: generic_name,
         atc: atc,
         description: '',
         presentations: [
           {
             name: presentacion,
-            form: forma,
-            administration: via,
+            form: forma.replaceAll(/[\[\]']/g, ''),
+            administration: via.replaceAll(/[\[\]']/g, ''),
             commercialName: nombre_comercial,
           },
         ],
@@ -56,8 +71,8 @@ async function main() {
 
     drugMap.get(generic_name).presentations.push({
       name: presentacion,
-      form: forma,
-      administration: via,
+      form: forma.replaceAll(/[\[\]']/g, ''),
+      administration: via.replaceAll(/[\[\]']/g, ''),
       commercialName: nombre_comercial,
     });
   }
@@ -77,7 +92,7 @@ async function main() {
 
     await prisma.drug.upsert({
       create: {
-        id: i,
+        id: drug.id,
         ...drug,
         presentations: {
           create: drug.presentations,
@@ -96,7 +111,7 @@ async function main() {
                 name: presentation.name,
                 administration: presentation.administration,
                 commercialName: presentation.commercialName,
-                drugId: i,
+                drugId: drug.id,
               },
             },
             update: presentation,
@@ -104,8 +119,6 @@ async function main() {
         },
       },
     });
-
-    i++;
   }
 
   console.log('Drugs seeded successfully');
