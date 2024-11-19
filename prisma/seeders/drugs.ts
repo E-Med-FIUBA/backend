@@ -6,7 +6,7 @@ import * as readline from 'readline';
 const prisma = new PrismaClient();
 
 async function main() {
-  const filePath = path.join(__dirname, '..', 'data', 'drugs.tsv');
+  const filePath = path.join(__dirname, '/../../../', 'prisma/data/drugs.tsv');
   const fileStream = fs.createReadStream(filePath);
 
   const rl = readline.createInterface({

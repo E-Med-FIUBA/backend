@@ -22,7 +22,7 @@ artifacts:
     - dist/**/*
     - prisma/schema.prisma
     - prisma/migrations/**/*
-    - prisma/seeders/*
+    - prisma/data/*
     - package.json
     - node_modules/**/*
     - .ebextensions/**/*
