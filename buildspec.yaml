@@ -23,7 +23,7 @@ artifacts:
     - prisma/schema.prisma
     - package.json
     - node_modules/**/*
-    - .ebextensions
+    - .ebextensions/**/*
     - templates/**/*
 # cache:
 #   paths:
