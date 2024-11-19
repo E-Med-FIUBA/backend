@@ -1,7 +1,7 @@
 export interface PrescriptionPatient {
   name: string;
   lastName: string;
-  birthDate: string;
+  birthDate: Date;
   sex: string;
   dni: number;
   insuranceCompany: {

@@ -26,6 +26,8 @@ import { DoctorsService } from '../doctors/doctors.service';
 import { InsuranceService } from '../insurance/insurance.service';
 import { PrescriptionPatient } from './type/prescription-patient';
 import { PresentationsService } from '../presentations/presentations.service';
+import { PrescriptionDTO } from './dto/prescription.dto';
+import { PatientsService } from '../patients/patients.service';
 
 @Injectable()
 export class PrescriptionsService {
@@ -41,6 +43,7 @@ export class PrescriptionsService {
     private doctorsService: DoctorsService,
     private insurancyCompanyService: InsuranceService,
     private presentationsService: PresentationsService,
+    private patientsService: PatientsService,
   ) {}
 
   create(data: Omit<Prescription, 'id'>) {
@@ -727,22 +730,35 @@ export class PrescriptionsService {
   }
 
   private async getPatientFromPrescription(
-    prescription: PatientlessPrescriptionDTO,
+    prescription: PatientlessPrescriptionDTO | PrescriptionDTO,
   ): Promise<PrescriptionPatient> {
-    const insuranceCompany = await this.insurancyCompanyService.findOne(
-      prescription.insuranceCompanyId,
-    );
+    if ('patientId' in prescription) {
+      const patient = await this.patientsService.findOne(
+        prescription.patientId,
+      );
 
-    const patient = {
-      name: prescription.name,
-      lastName: prescription.lastName,
-      birthDate: prescription.birthDate,
-      sex: prescription.sex,
-      dni: prescription.dni,
-      insuranceCompany: insuranceCompany,
-    };
+      return {
+        name: patient.name,
+        lastName: patient.lastName,
+        birthDate: patient.birthDate,
+        sex: patient.sex,
+        dni: patient.dni,
+        insuranceCompany: patient.insuranceCompany,
+      };
+    } else {
+      const insuranceCompany = await this.insurancyCompanyService.findOne(
+        prescription.insuranceCompanyId,
+      );
 
-    return patient;
+      return {
+        name: prescription.name,
+        lastName: prescription.lastName,
+        birthDate: prescription.birthDate,
+        sex: prescription.sex,
+        dni: prescription.dni,
+        insuranceCompany: insuranceCompany,
+      };
+    }
   }
   async generateSignatureData(
     prescription: PatientlessPrescriptionDTO,
@@ -768,7 +784,7 @@ export class PrescriptionsService {
       patient: {
         fullName: `${patient.name} ${patient.lastName}`,
         insurancePlan: patient.insuranceCompany.name,
-        birthDate: patient.birthDate,
+        birthDate: patient.birthDate.toISOString(),
         sex: patient.sex,
         dni: patient.dni,
       },
@@ -779,7 +795,7 @@ export class PrescriptionsService {
         unitCount: prescription.quantity,
         diagnosis: prescription.indication,
       },
-      date: prescription.emitedAt,
+      date: prescription.emitedAt.toISOString(),
     };
     return signatureData;
   }

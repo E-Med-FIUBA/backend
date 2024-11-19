@@ -7,7 +7,7 @@ import { DoctorsTreeService } from 'src/models/doctors-tree/doctors-tree.service
 import { ContractService, Proof } from '../contract/contract.service';
 import { PrismaTransactionalClient } from 'utils/types';
 import { DoctorUpdateDTO } from './dto/doctor-update.dto';
-import { DoctorData, SignatureService } from 'src/signature/signature.service';
+import { DoctorData } from 'src/signature/signature.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailingService } from 'src/mailing/mailing.service';
 
@@ -21,7 +21,7 @@ export class DoctorsService {
     private doctorsTreeService: DoctorsTreeService,
     private contractService: ContractService,
     private mailingService: MailingService,
-  ) { }
+  ) {}
 
   async create(data: DoctorData, tx: PrismaTransactionalClient = this.prisma) {
     const doctor = await tx.doctor.create({
@@ -78,10 +78,14 @@ export class DoctorsService {
     });
   }
 
-  findOne(id: number): Promise<Doctor> {
+  findOne(id: number) {
     return this.prisma.doctor.findUnique({
       where: {
         id,
+      },
+      include: {
+        user: true,
+        specialty: true,
       },
     });
   }
