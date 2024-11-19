@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { DrugDTO } from './dto/drug.dto';
 import { Drug } from '@prisma/client';
 
 @Injectable()
@@ -28,7 +27,7 @@ export class DrugsService {
     });
   }
 
-  update(id: number, data: DrugDTO) {
+  update(id: number, data: Drug) {
     return this.prismaService.drug.update({
       where: {
         id: id,
