@@ -1,8 +1,9 @@
 import { Sex } from '@prisma/client';
+import { Transform } from 'class-transformer';
 import {
-  IsDateString,
   IsEmail,
   IsEnum,
+  isISO8601,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -24,7 +25,18 @@ export class PatientlessPrescriptionDTO {
   @IsNotEmpty()
   sex: Sex;
 
-  @IsDateString()
+  @Transform(({ value }) => {
+    const isValidDate = isISO8601(value, {
+      strict: true,
+      strictSeparator: true,
+    });
+    if (!isValidDate) {
+      throw new Error(
+        `Property "from_date" should be a valid ISO8601 date string`,
+      );
+    }
+    return new Date(value);
+  })
   @IsNotEmpty()
   birthDate: Date;
 
@@ -52,4 +64,19 @@ export class PatientlessPrescriptionDTO {
   @IsString()
   @IsNotEmpty()
   signature: string;
+
+  @Transform(({ value }) => {
+    const isValidDate = isISO8601(value, {
+      strict: true,
+      strictSeparator: true,
+    });
+    if (!isValidDate) {
+      throw new Error(
+        `Property "emitedAt" should be a valid ISO8601 date string`,
+      );
+    }
+    return new Date(value);
+  })
+  @IsNotEmpty()
+  emitedAt: Date;
 }
