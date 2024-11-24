@@ -26,6 +26,7 @@ artifacts:
     - package.json
     - node_modules/**/*
     - .ebextensions/**/*
+    - .platform/**/*
     - templates/**/*
 # cache:
 #   paths:
