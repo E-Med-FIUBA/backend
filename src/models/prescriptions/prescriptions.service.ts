@@ -632,6 +632,22 @@ export class PrescriptionsService {
   }
 
   async getMetrics(pharmacistId: number) {
+    if (process.env.MOCK_METRICS) {
+      return {
+        topDrugs: [
+          { name: 'Paracetamol', count: 100 },
+          { name: 'Ibuprofeno', count: 83 },
+          { name: 'Omeprazol', count: 72 },
+          { name: 'Amoxicilina', count: 34 },
+          { name: 'Diazepam', count: 10 },
+        ],
+        totalPrescriptions: 400,
+        averageDailyPrescriptions: 10,
+        uniquePatients: 200,
+        uniqueDoctors: 10,
+      };
+    }
+
     const prescriptions = await this.prisma.prescription.findMany({
       where: {
         pharmacistId,
