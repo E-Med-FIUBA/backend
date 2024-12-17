@@ -114,6 +114,12 @@ export class PrescriptionsService {
     });
 
     if (process.env.DISABLE_BLOCKCHAIN) {
+      this.mailingService.sendPrescription(
+        prescription.patient.email,
+        prescription.patient,
+        prescription.doctor,
+        prescription,
+      );
       return prescription;
     }
 
@@ -198,10 +204,10 @@ export class PrescriptionsService {
     });
   }
 
-  findOne(id: number) {
-    return this.prisma.prescription.findUnique({
+  async findOne(id: number) {
+    const prescription = await this.prisma.prescription.findUnique({
       where: {
-        id: id,
+        id,
       },
       include: {
         presentation: {
@@ -209,19 +215,66 @@ export class PrescriptionsService {
             drug: true,
           },
         },
-        patient: {
-          include: {
-            insuranceCompany: true,
+        doctor: {
+          select: {
+            id: true,
+            license: true,
+            specialtyId: true,
+            userId: true,
+            certificate: true,
+            user: {
+              select: {
+                id: true,
+                dni: true,
+                uid: true,
+                name: true,
+                lastName: true,
+                email: true,
+              },
+            },
+            specialty: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
-        doctor: {
-          include: {
-            user: true,
-            specialty: true,
+        patient: {
+          select: {
+            name: true,
+            lastName: true,
+            birthDate: true,
+            sex: true,
+            dni: true,
+            email: true,
+            insuranceCompanyId: true,
+            affiliateNumber: true,
+            doctorId: true,
+            id: true,
+            insuranceCompany: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
     });
+
+    const data = await this.getPrescriptionData(
+      prescription as unknown as VerifiedPrescription,
+    );
+
+    const isValid = await this.signatureService.verify(
+      prescription.doctorId,
+      JSON.stringify(data),
+      prescription.signature,
+    );
+
+    if (!isValid) {
+      throw new BadRequestException('Prescripcion invalida');
+    }
+    return prescription;
   }
 
   markAsUsed(id: number, pharmacistId: number) {
@@ -641,10 +694,10 @@ export class PrescriptionsService {
           { name: 'Amoxicilina', count: 34 },
           { name: 'Diazepam', count: 10 },
         ],
-        totalPrescriptions: 400,
+        totalPrescriptions: 276,
         averageDailyPrescriptions: 10,
-        uniquePatients: 200,
-        uniqueDoctors: 10,
+        uniquePatients: 140,
+        uniqueDoctors: 30,
       };
     }
 

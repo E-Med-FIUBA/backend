@@ -41,7 +41,22 @@ export class DoctorsService {
       },
     });
 
-    if (process.env.DISABLE_BLOCKCHAIN) return doctor;
+    if (process.env.DISABLE_BLOCKCHAIN) {
+      const completeDoctor = await this.prisma.doctor.findUnique({
+        where: {
+          id: doctor.id,
+        },
+        include: {
+          user: true,
+          specialty: true,
+        },
+      });
+      await this.mailingService.sendDoctorWelcomeMail(
+        data.email,
+        completeDoctor,
+      );
+      return doctor;
+    }
 
     const proofData = await this.doctorsTreeService.createNode(doctor, tx);
 

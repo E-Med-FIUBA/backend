@@ -19,6 +19,7 @@ import { MailingService } from '../../mailing/mailing.service';
 import { PharmacistGuard } from '../../auth/guards/pharmacist.guard';
 import { ReqUser } from '../../utils/req_user';
 import { DoctorGuard } from '../../auth/guards/doctor.guard';
+import { AuthGuard } from '../../auth/guards/auth.guard';
 
 @ApiTags('prescriptions')
 @Controller('prescriptions')
@@ -76,6 +77,38 @@ export class PrescriptionsController {
     return this.prescriptionsService.getMetrics(pharmacistId);
   }
 
+  @Get(':id/verify')
+  @UseGuards(PharmacistGuard)
+  verify(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
+    return this.prescriptionsService.verify(id);
+  }
+
+  @Get(':id')
+  @UseGuards(AuthGuard)
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: ReqUser,
+  ): Promise<Prescription> {
+    const pharmacistId = req.user?.pharmacist?.id;
+    const doctorId = req.user?.doctor?.id;
+
+    if (!pharmacistId && !doctorId) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    const prescription = await this.prescriptionsService.findOne(id);
+
+    if (pharmacistId && prescription.pharmacistId !== pharmacistId) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    if (doctorId && prescription.doctorId !== doctorId) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    return prescription;
+  }
+
   @Get()
   @UseGuards(DoctorGuard)
   findAll(@Req() req): Promise<Prescription[]> {
@@ -84,18 +117,6 @@ export class PrescriptionsController {
       throw new UnauthorizedException('Unauthorized');
     }
     return this.prescriptionsService.findAllByDoctor(doctorId);
-  }
-
-  @Get(':id')
-  @UseGuards(DoctorGuard)
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
-    return this.prescriptionsService.findOne(id);
-  }
-
-  @Get(':id/verify')
-  @UseGuards(PharmacistGuard)
-  verify(@Param('id', ParseIntPipe) id: number): Promise<Prescription> {
-    return this.prescriptionsService.verify(id);
   }
 
   @Post()

@@ -13,7 +13,7 @@ const logger = new Logger();
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private usersService: UsersService) { }
+  constructor(private usersService: UsersService) {}
 
   public async canActivate(ctx: ExecutionContext): Promise<boolean> | never {
     const request = ctx.switchToHttp().getRequest();

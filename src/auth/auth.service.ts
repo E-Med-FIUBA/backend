@@ -134,6 +134,7 @@ export class AuthService {
         try {
           await this.doctorsService.create(
             {
+              email: doctor.email,
               userId: user.id,
               license: doctor.license,
               specialtyId: doctor.specialtyId,

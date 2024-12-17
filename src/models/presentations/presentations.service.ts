@@ -7,8 +7,9 @@ export class PresentationsService {
 
   findAll() {
     return this.prismaService.presentation.findMany({
-      include: {
-        drug: true,
+      distinct: ['name'],
+      select: {
+        name: true,
       },
     });
   }
