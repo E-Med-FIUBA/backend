@@ -42,7 +42,7 @@ export class DoctorsService {
     });
 
     if (process.env.DISABLE_BLOCKCHAIN) {
-      const completeDoctor = await this.prisma.doctor.findUnique({
+      const completeDoctor = await tx.doctor.findUnique({
         where: {
           id: doctor.id,
         },
