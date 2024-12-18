@@ -40,17 +40,6 @@
         margin: 8px 0;
         color: #555;
       }
-      .qr-code-header {
-        position: absolute;
-        top: 20px;
-        right: 30px;
-      }
-      .qr-code-header img {
-        width: 70px;
-      }
-      .qr-code-footer {
-        display: none;
-      }
       .qr-code-footer img {
         width: 200px;
       }
@@ -66,17 +55,13 @@
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 20px;
       }
-      @media screen and (max-width: 600px) {
-        .qr-code-header {
-          display: none;
-        }
-
-        .qr-code-footer {
-          display: flex;
-          justify-content: center;
-          margin-top: 20px;
-        }
+      
+      .qr-code-footer {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
       }
+      
     </style>
   </head>
   <body>
@@ -86,13 +71,6 @@
         <span>{{emitedAt}}</span>
       </div>
       {{/with}}
-
-      <div class="qr-code-header">
-        <img
-          src="{{{qrCode}}}"
-          alt="QR Code"
-        />
-      </div>
 
       <h2>Prescripcion Médica Electrónica</h2>
 
